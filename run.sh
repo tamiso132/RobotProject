@@ -1,2 +1,2 @@
-gcc -o bluetooth ./src/bluez/main.c -lbluetooth
+gcc -o bluetooth ./src/bluez/server/main.c -lbluetooth
 ./bluetooth

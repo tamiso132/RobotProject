@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     int s, status;
     List *device_list = scan_devices();
     Device *device = (Device *)remove_from_list(device_list);
-    free_list(device_list);
+    //free_list(device_list);
 
     // allocate a socket
     s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);

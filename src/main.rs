@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         adapter.start_scan().await.unwrap();
         std::thread::sleep(time::Duration::from_secs(10));
         let periph = adapter.peripherals().await.unwrap();
-
+	println!("Does it come here");
         for p in periph {
             let device_name = p.properties().await.unwrap().unwrap().local_name.unwrap();
 

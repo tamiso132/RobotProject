@@ -5,15 +5,27 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
+#include <string.h>
 
-int scan_adresses()
+#include "scan.h"
+
+#define MAX_DEVICES 10 // Maximum number of names
+
+List *scan_devices()
 {
     inquiry_info *ii = NULL;
+
     int max_rsp, num_rsp;
     int dev_id, sock, len, flags;
     int i;
-    char addr[19] = {0};
-    char name[248] = {0};
+    char addr[MAC_ADRESS_LENGTH] = {0};
+
+    char name[MAX_NAME_LENGTH] = {0};
+
+    List *devices = create_list();
+    Device *device = malloc(sizeof(Device));
+
+    printf("hello");
 
     dev_id = hci_get_route(NULL);
     sock = hci_open_dev(dev_id);
@@ -36,13 +48,16 @@ int scan_adresses()
     {
         ba2str(&(ii + i)->bdaddr, addr);
         memset(name, 0, sizeof(name));
-        if (hci_read_remote_name(sock, &(ii + i)->bdaddr, sizeof(name),
-                                 name, 0) < 0)
+        if (hci_read_remote_name(sock, &(ii + i)->bdaddr, sizeof(name), name, 0) < 0)
             strcpy(name, "[unknown]");
-        printf("%s  %s\n", addr, name);
+
+        strcpy(device->name, name);
+        strcpy(device->mac_adress, addr);
+
+        add_to_list(devices, (void *)device);
     }
 
     free(ii);
     close(sock);
-    return 0;
+    return devices;
 }

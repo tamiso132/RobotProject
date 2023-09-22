@@ -1,1 +1,0 @@
-int scan_adresses();

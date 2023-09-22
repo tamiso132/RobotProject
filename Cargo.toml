@@ -11,7 +11,11 @@ bluer = "0.16.1"
 rand = "0.8.5"
 tokio = { version = "1.32", features = ["full"] }
 uuid = "1.4.1"
+<<<<<<< HEAD
 libc = "0.2"
 
 [build-dependencies]
 cc = "1.0"
+=======
+my_c_library = { path = "libclient.so"}
+>>>>>>> c163307c726f515b7ec977135620cc75bdea3404

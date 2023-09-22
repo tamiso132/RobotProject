@@ -6,7 +6,7 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 
-int scan()
+int scan_adresses()
 {
     inquiry_info *ii = NULL;
     int max_rsp, num_rsp;

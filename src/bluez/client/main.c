@@ -3,12 +3,15 @@
 #include <sys/socket.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#include "../scan.h"
+
 
 int main(int argc, char **argv)
 {
     struct sockaddr_rc addr = { 0 };
     int s, status;
     char dest[18] = "01:23:45:67:89:AB";
+    scan_adresses()
 
     // allocate a socket
     s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -20,6 +23,7 @@ int main(int argc, char **argv)
 
     // connect to server
     status = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+
 
     // send a message
     if( status == 0 ) {

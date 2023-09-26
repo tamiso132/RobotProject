@@ -3,4 +3,4 @@
 
 int u_init_server();
 
-int u_device_connect(char *ip_adress);
+int u_device_connect(const char *ip_adress);

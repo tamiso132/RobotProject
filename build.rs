@@ -32,6 +32,5 @@ fn main() {
         .compile("bro");
 
     println!("cargo:rerun-if-changed=bluez/"); // Replace 'bluetooth' with the actual library name
-    println!("cargo:rustc-link-lib=usb-1.0");
     println!("cargo:rustc-link-lib=bluetooth");
 }

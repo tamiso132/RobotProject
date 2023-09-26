@@ -1,0 +1,1 @@
+bindgen bluez/bluegen.h -o src/bindings.rs

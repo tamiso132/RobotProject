@@ -5,7 +5,8 @@
 #include <sys/socket.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
-#include "../shared/scan.h"
+#include "device.h"
+#include "utility.h"
 
 int main(int argc, char **argv)
 {
@@ -14,10 +15,10 @@ int main(int argc, char **argv)
     int s, status;
     List *device_list = scan_devices();
     printf("\ndevices size: %d", device_list->size);
-    Device *device = (Device *)remove_from_list(device_list);
+    DeviceInfo *device = (Device *)remove_from_list(device_list);
     while (strcmp(device->name, "tommers") != 0 && device_list->size > 0)
     {
-        printf("\n%s\n", device->mac_adress);
+        printf("\n%s\n", device->mac_address);
         printf("\n%s\n", device->name);
         printf("REMOVED");
         free(device);
@@ -39,9 +40,9 @@ int main(int argc, char **argv)
     addr.rc_family = AF_BLUETOOTH;
     addr.rc_channel = (uint8_t)1;
 
-    printf("\n%s\n", device->mac_adress);
+    printf("\n%s\n", device->mac_address);
     printf("\n%s\n", device->name);
-    str2ba(device->mac_adress, &addr.rc_bdaddr);
+    str2ba(device->mac_address, &addr.rc_bdaddr);
 
     // connect to server
     status = connect(s, (struct sockaddr *)&addr, sizeof(addr));

@@ -1,5 +1,7 @@
 {
-    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.default.includePath": [
+        "bluez/include"
+    ],
     "files.associations": {
         "bluetooth.h": "c",
         "scan.h": "c",
@@ -7,6 +9,17 @@
         "rfcomm.h": "c",
         "list": "c",
         "socket.h": "c",
-        "stdio.h": "c"
-    }
+        "stdio.h": "c",
+        "utility.h": "c",
+        "device.h": "c",
+        "string.h": "c"
+    },
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml"
+    ]
 }

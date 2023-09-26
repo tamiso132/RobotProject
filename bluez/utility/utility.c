@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "utility.h"
+#include "device.h"
 
 List *create_list()
 {
@@ -10,7 +11,7 @@ List *create_list()
     return new_list;
 }
 
-void add_to_list(List *list, void *data)
+void add_to_list(List *list, Device *data)
 {
     Node *new_node = (Node *)malloc(sizeof(Node));
     new_node->data = data;
@@ -19,14 +20,14 @@ void add_to_list(List *list, void *data)
     list->size++;
 }
 
-void *remove_from_list(List *list)
+Device *pop_front(List *list)
 {
     if (list->size == 0)
     {
         return NULL;
     }
     Node *node_to_remove = list->head;
-    void *data = node_to_remove->data;
+    Device *data = node_to_remove->data;
     list->head = node_to_remove->next;
     free(node_to_remove);
     list->size--;

@@ -2,3 +2,20 @@
 Material
 https://github.com/Dobot-Arm/TCP-IP-Protocol/blob/master
 https://github.com/robofit/dobot/tree/master/dobot/src C library
+
+Endast linux support
+
+Nödvändiga packages för att de ska compila.
+
+-bluez development packages
+
+
+Kommande features som arbetas med nu, 
+*Fungerande bluetooth api som är easy och high level att använda
+*client kod 
+*server kod
+
+Features som kommer senare
+windows support
+protokoll för skickning mellan data
+robot kommunication

@@ -211,49 +211,9 @@ pub type uintmax_t = __uintmax_t;
 pub type Callback = ::std::option::Option<unsafe extern "C" fn(bytes: *mut u8, size: u32)>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct DeviceInfo {
+pub struct Device {
     pub name: [::std::os::raw::c_char; 248usize],
     pub mac_address: [::std::os::raw::c_char; 18usize],
-}
-#[test]
-fn bindgen_test_layout_DeviceInfo() {
-    const UNINIT: ::std::mem::MaybeUninit<DeviceInfo> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<DeviceInfo>(),
-        266usize,
-        concat!("Size of: ", stringify!(DeviceInfo))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<DeviceInfo>(),
-        1usize,
-        concat!("Alignment of ", stringify!(DeviceInfo))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(DeviceInfo),
-            "::",
-            stringify!(name)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).mac_address) as usize - ptr as usize },
-        248usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(DeviceInfo),
-            "::",
-            stringify!(mac_address)
-        )
-    );
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct Device {
-    pub info: DeviceInfo,
 }
 #[test]
 fn bindgen_test_layout_Device() {
@@ -270,65 +230,25 @@ fn bindgen_test_layout_Device() {
         concat!("Alignment of ", stringify!(Device))
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).info) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize },
         0usize,
         concat!(
             "Offset of field: ",
             stringify!(Device),
             "::",
-            stringify!(info)
+            stringify!(name)
         )
     );
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct BluetoothSocket {
-    pub listen_callback: *mut Callback,
-    pub socket: ::std::os::raw::c_int,
-}
-#[test]
-fn bindgen_test_layout_BluetoothSocket() {
-    const UNINIT: ::std::mem::MaybeUninit<BluetoothSocket> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
     assert_eq!(
-        ::std::mem::size_of::<BluetoothSocket>(),
-        16usize,
-        concat!("Size of: ", stringify!(BluetoothSocket))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<BluetoothSocket>(),
-        8usize,
-        concat!("Alignment of ", stringify!(BluetoothSocket))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).listen_callback) as usize - ptr as usize },
-        0usize,
+        unsafe { ::std::ptr::addr_of!((*ptr).mac_address) as usize - ptr as usize },
+        248usize,
         concat!(
             "Offset of field: ",
-            stringify!(BluetoothSocket),
+            stringify!(Device),
             "::",
-            stringify!(listen_callback)
+            stringify!(mac_address)
         )
     );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).socket) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(BluetoothSocket),
-            "::",
-            stringify!(socket)
-        )
-    );
-}
-extern "C" {
-    pub fn test() -> *mut Device;
-}
-extern "C" {
-    pub fn device_scan() -> *mut List;
-}
-extern "C" {
-    pub fn device_connect(device: *mut DeviceInfo) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn device_write(socket: ::std::os::raw::c_int, bytes: *mut u8, n: ::std::os::raw::c_int);
@@ -434,4 +354,19 @@ extern "C" {
 }
 extern "C" {
     pub fn free_list(list: *mut List);
+}
+extern "C" {
+    pub fn test() -> *mut Device;
+}
+extern "C" {
+    pub fn b_device_scan_bluetooth() -> *mut List;
+}
+extern "C" {
+    pub fn b_device_connect(device: *const Device) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn u_device_scan() -> *mut List;
+}
+extern "C" {
+    pub fn u_device_connect() -> ::std::os::raw::c_int;
 }

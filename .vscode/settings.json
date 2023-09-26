@@ -12,7 +12,9 @@
         "stdio.h": "c",
         "utility.h": "c",
         "device.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "fcntl.h": "c",
+        "libusb.h": "c"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",

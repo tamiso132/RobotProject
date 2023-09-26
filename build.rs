@@ -13,7 +13,7 @@ fn main() {
         .clang_arg("-Ibluez/include")
         .generate()
         .unwrap();
-    bindings.write_to_file("src/bindings.rs").unwrap();
+    bindings.write_to_file("src/shared/bindings.rs").unwrap();
 
     let mut c_paths = vec![];
     for c in entries {
@@ -28,8 +28,10 @@ fn main() {
     cc::Build::new()
         .files(c_paths.iter())
         .include(include)
+        .include("/usr/include/libusb-1.0")
         .compile("bro");
 
     println!("cargo:rerun-if-changed=bluez/"); // Replace 'bluetooth' with the actual library name
+    println!("cargo:rustc-link-lib=usb-1.0");
     println!("cargo:rustc-link-lib=bluetooth");
 }

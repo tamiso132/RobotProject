@@ -10,8 +10,7 @@ pub fn device_connect() {
 
 pub fn connect_server() {
     unsafe {
-        let s = "192.168.0.107".as_bytes();
-
+        let s = std::ffi::CString::new("192.168.0.107").unwrap();
         let socket_fd = bindings::u_device_connect(s.as_ptr());
     }
 }

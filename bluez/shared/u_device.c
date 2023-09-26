@@ -7,6 +7,9 @@
 #include <errno.h>
 
 #include <netinet/in.h>
+#include <netdb.h>
+
+#include <netinet/in.h>
 
 #include "b_device.h"
 #include "utility.h"
@@ -75,34 +78,45 @@ int u_init_server()
     return 0;
 }
 
+#define SERVER_IP "127.0.0.1"
+
 int u_device_connect(char *ip_dress)
 {
-    int client_socket;
-    struct sockaddr_in server_addr;
-
-    // Create socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_socket == -1)
+    printf("does\n");
+    int status, valread, client_fd;
+    struct sockaddr_in serv_addr;
+    char *hello = "Hello from client";
+    char buffer[1024] = {0};
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("Socket creation error");
-        exit(1);
+        printf("\n Socket creation error \n");
+        return -1;
     }
 
-    // Configure server address
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(ip_dress); // Replace with the server's IP address
-    server_addr.sin_port = htons(PORT);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
 
-    // Connect to the server
-    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    // Convert IPv4 and IPv6 addresses from text to binary
+    // form
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0)
     {
-        perror("Connection error");
-        close(client_socket);
-        exit(1);
+        printf(
+            "\nInvalid address/ Address not supported \n");
+        return -1;
     }
 
-    printf("Connected to server %s:%d\n", ip_dress, PORT);
+    if ((status = connect(client_fd, (struct sockaddr *)&serv_addr,
+                          sizeof(serv_addr))) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+    send(client_fd, hello, strlen(hello), 0);
+    printf("Hello message sent\n");
+    valread = read(client_fd, buffer, 1024);
+    printf("%s\n", buffer);
 
-    return client_socket;
+    // closing the connected socket
+    close(client_fd);
+    return 0;
 }

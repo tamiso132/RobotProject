@@ -28,7 +28,6 @@ fn main() {
     cc::Build::new()
         .files(c_paths.iter())
         .include(include)
-        .include("/usr/include/libusb-1.0")
         .compile("bro");
 
     println!("cargo:rerun-if-changed=bluez/"); // Replace 'bluetooth' with the actual library name

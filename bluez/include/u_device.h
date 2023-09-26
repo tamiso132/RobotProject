@@ -1,6 +1,6 @@
 #pragma onue
 #include "device.h"
 
-List *u_device_scan();
+int u_init_server();
 
-int u_device_connect();
+int u_device_connect(char *ip_adress);

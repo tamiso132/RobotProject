@@ -2,13 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/rfcomm.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/hci_lib.h>
 #include <errno.h>
-#include "libusb.h"
 
 #include "b_device.h"
 #include "utility.h"
@@ -16,54 +12,86 @@
 #define MAX_DEVICES 10 // Maximum number of names
 #define BUF_SIZE 1024
 
-List *u_device_scan()
+#define PORT 12345
+
+int u_init_server()
 {
 
-    FILE *f;
-    char *buf;
+    int server_socket, client_socket;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
 
-    f = popen("lsusb", "r");
-    if (f == NULL)
+    // Create socket
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == -1)
     {
-        perror("1 - Error");
-        return errno;
+        perror("Socket creation error");
+        exit(1);
     }
 
-    buf = malloc(BUF_SIZE);
-    if (buf == NULL)
+    // Configure server address
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(PORT);
+
+    // Bind socket to the server address
+    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
-        perror("2 - Error");
-        pclose(f);
-        return errno;
+        perror("Bind error");
+        close(server_socket);
+        exit(1);
     }
 
-    while (fgets(buf, BUF_SIZE, f) != NULL)
+    // Listen for incoming connections
+    if (listen(server_socket, 5) == -1)
     {
-        printf("%s", buf);
+        perror("Listen error");
+        close(server_socket);
+        exit(1);
     }
-    puts("");
 
-    pclose(f);
-    free(buf);
+    printf("Server is listening on port %d...\n", PORT);
 
-    return 0;
+    // Accept incoming connection
+    client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
+    if (client_socket == -1)
+    {
+        perror("Accept error");
+        close(server_socket);
+        exit(1);
+    }
+    return server_socket;
 }
 
-int u_device_connect(const Device *device)
+int u_device_connect(char *ip_dress)
 {
-    struct sockaddr_rc addr = {0};
-    addr.rc_family = AF_BLUETOOTH;
-    addr.rc_channel = (uint8_t)1;
+    int client_socket;
+    struct sockaddr_in server_addr;
 
-    str2ba(device->mac_address, &addr.rc_bdaddr);
-
-    int s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-    int status = connect(s, (struct sockaddr *)&device->mac_address, sizeof(device->mac_address));
-    if (status == -1)
+    // Create socket
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket == -1)
     {
-        perror("unable to connect");
-        return -1;
+        perror("Socket creation error");
+        exit(1);
     }
 
-    return s;
+    // Configure server address
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(ip_dress); // Replace with the server's IP address
+    server_addr.sin_port = htons(PORT);
+
+    // Connect to the server
+    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
+        perror("Connection error");
+        close(client_socket);
+        exit(1);
+    }
+
+    printf("Connected to server %s:%d\n", ip_dress, PORT);
+
+    return client_socket;
 }

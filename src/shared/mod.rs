@@ -4,6 +4,6 @@ mod bindings;
 
 pub fn device_connect() {
     unsafe {
-        bindings::u_device_scan();
+        let socket_fd = bindings::u_init_server();
     }
 }

@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "b_device.h"
+#include "device.h"
 #include "utility.h"
 
 #define MAX_DEVICES 10 // Maximum number of names

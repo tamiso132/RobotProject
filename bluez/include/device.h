@@ -15,3 +15,22 @@ typedef struct Device
 
 void device_write(int socket, uint8_t *bytes, int n);
 int device_read(int socket, int bytes_to_read, uint8_t *bytes);
+
+List *b_device_scan_bluetooth();
+
+int b_device_connect(const Device *device);
+
+List *u_device_scan();
+
+int u_device_connect();
+
+//red - power
+// black - ground
+// white rx -- usb port
+//green tx -- out of the usb port
+
+// serial port gives
+//RX is 3.3 volt
+//TX is 3.3 volt
+
+//robot specs

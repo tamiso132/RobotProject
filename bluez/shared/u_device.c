@@ -10,14 +10,15 @@
 #include <netdb.h>
 
 #include <netinet/in.h>
-
+#include <arpa/inet.h>
+#include <net/if.h> // for ifreq structure
 #include "b_device.h"
 #include "utility.h"
 
 #define MAX_DEVICES 10 // Maximum number of names
 #define BUF_SIZE 1024
 
-#define PORT 40
+#define PORT 2000
 
 int u_init_server()
 {
@@ -78,53 +79,57 @@ int u_init_server()
     return 0;
 }
 
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "192.168.0.10\0"
 
 int u_device_connect(const char *ip_dress)
 {
-    int clilen, sockfd, newsockfd, n, cpid;
-    char msg[100];
-    struct sockaddr_in serv_addr, cli;
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    printf("does\n");
+    int status, valread, client_fd;
+    struct sockaddr_in serv_addr;
+
+    const char *interface_name = "enp0s20f0u14";
+
+    char *hello = "Hello from client";
+    char buffer[1024] = {0};
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        printf("socket failed to establish\n");
-        exit(0);
+        printf("\n Socket creation error \n");
+        return -1;
     }
-    printf("socket created\n");
-    bzero((char *)&serv_addr, sizeof(serv_addr));
+
+    // if (setsockopt(client_fd, SOL_SOCKET, 25, interface_name, strlen(interface_name) + 1) == -1)
+    // {
+    //     perror("setsockopt failed");
+    //     close(client_fd);
+    //     exit(EXIT_FAILURE);
+    // }
+    printf("damn it worked");
+
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(PORT);
-    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+
+    // Convert IPv4 and IPv6 addresses from text to binary
+    // form
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0)
     {
-        printf("binding failed\n");
-        exit(0);
+        printf(
+            "\nInvalid address/ Address not supported \n");
+        return -1;
     }
-    printf("binding established\n");
-    if (listen(sockfd, 5) < 0)
+    printf("does\n");
+
+    if ((status = connect(client_fd, (struct sockaddr *)&serv_addr,
+                          sizeof(serv_addr))) < 0)
     {
-        printf("not listening\n");
-        exit(0);
+        printf("\nConnection Failed \n");
+        return -1;
     }
-    printf("listening|n");
-    for (;;)
-    {
-        clilen = sizeof(cli);
-        if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli, &clilen)) < 0)
-        {
-            printf("accept failed\n");
-            exit(0);
-        }
-        printf("accepted\n");
-        cpid = fork();
-        if (cpid == 0)
-        {
-            n = read(newsockfd, msg, 80);
-            msg[n] = '\0';
-            write(newsockfd, msg, strlen(msg));
-            close(newsockfd);
-            exit(0);
-        }
-    }
+    send(client_fd, hello, strlen(hello), 0);
+    printf("Hello message sent\n");
+    valread = read(client_fd, buffer, 1024);
+    printf("%s\n", buffer);
+
+    // closing the connected socket
+    close(client_fd);
     return 0;
 }

@@ -2,68 +2,135 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/rfcomm.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/hci_lib.h>
 #include <errno.h>
-#include "libusb.h"
 
+#include "device.h"
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <net/if.h> // for ifreq structure
 #include "device.h"
 #include "utility.h"
 
 #define MAX_DEVICES 10 // Maximum number of names
 #define BUF_SIZE 1024
 
-List *u_device_scan()
+#define PORT 2000
+
+int u_init_server()
 {
 
-    FILE *f;
-    char *buf;
+    int server_fd, new_socket, valread;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+    char buffer[1024] = {0};
+    char *hello = "Hello from server";
 
-    f = popen("lsusb", "r");
-    if (f == NULL)
+    // Creating socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("1 - Error");
-        return errno;
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
 
-    buf = malloc(BUF_SIZE);
-    if (buf == NULL)
+    // Forcefully attaching socket to the port 8080
+    if (setsockopt(server_fd, SOL_SOCKET,
+                   SO_REUSEADDR | 15, &opt,
+                   sizeof(opt)))
     {
-        perror("2 - Error");
-        pclose(f);
-        return errno;
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
     }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
 
-    while (fgets(buf, BUF_SIZE, f) != NULL)
+    // Forcefully attaching socket to the port 8080
+    if (bind(server_fd, (struct sockaddr *)&address,
+             sizeof(address)) < 0)
     {
-        printf("%s", buf);
+        perror("bind failed");
+        exit(EXIT_FAILURE);
     }
-    puts("");
+    if (listen(server_fd, 3) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+                             (socklen_t *)&addrlen)) < 0)
+    {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+    valread = read(new_socket, buffer, 1024);
+    printf("%s\n", buffer);
+    send(new_socket, hello, strlen(hello), 0);
+    printf("Hello message sent\n");
 
-    pclose(f);
-    free(buf);
-
+    // closing the connected socket
+    close(new_socket);
+    // closing the listening socket
+    shutdown(server_fd, SHUT_RDWR);
     return 0;
 }
 
-int u_device_connect(const Device *device)
+#define SERVER_IP "192.168.0.10\0"
+
+int u_device_connect(const char *ip_dress)
 {
-    struct sockaddr_rc addr = {0};
-    addr.rc_family = AF_BLUETOOTH;
-    addr.rc_channel = (uint8_t)1;
+    printf("does\n");
+    int status, valread, client_fd;
+    struct sockaddr_in serv_addr;
 
-    str2ba(device->mac_address, &addr.rc_bdaddr);
+    const char *interface_name = "enp0s20f0u14";
 
-    int s = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
-    int status = connect(s, (struct sockaddr *)&device->mac_address, sizeof(device->mac_address));
-    if (status == -1)
+    char *hello = "Hello from client";
+    char buffer[1024] = {0};
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("unable to connect");
+        printf("\n Socket creation error \n");
         return -1;
     }
 
-    return s;
+    // if (setsockopt(client_fd, SOL_SOCKET, 25, interface_name, strlen(interface_name) + 1) == -1)
+    // {
+    //     perror("setsockopt failed");
+    //     close(client_fd);
+    //     exit(EXIT_FAILURE);
+    // }
+    printf("damn it worked");
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+
+    // Convert IPv4 and IPv6 addresses from text to binary
+    // form
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0)
+    {
+        printf(
+            "\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+    printf("does\n");
+
+    if ((status = connect(client_fd, (struct sockaddr *)&serv_addr,
+                          sizeof(serv_addr))) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+    send(client_fd, hello, strlen(hello), 0);
+    printf("Hello message sent\n");
+    valread = read(client_fd, buffer, 1024);
+    printf("%s\n", buffer);
+
+    // closing the connected socket
+    close(client_fd);
+    return 0;
 }

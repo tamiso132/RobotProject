@@ -4,7 +4,6 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "/usr/include/libusb-1.0"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

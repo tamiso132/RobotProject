@@ -365,8 +365,8 @@ extern "C" {
     pub fn b_device_connect(device: *const Device) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn u_device_scan() -> *mut List;
+    pub fn u_init_server() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn u_device_connect() -> ::std::os::raw::c_int;
+    pub fn u_device_connect(ip_adress: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }

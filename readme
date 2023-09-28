@@ -8,6 +8,7 @@ Endast linux support
 Nödvändiga packages för att de ska compila.
 
 -bluez development packages
+sudo chmod 666 /dev/ttyUSB0, for permission on reboot
 
 
 Kommande features som arbetas med nu, 

@@ -260,6 +260,29 @@ extern "C" {
         bytes: *mut u8,
     ) -> ::std::os::raw::c_int;
 }
+extern "C" {
+    pub fn b_device_scan_bluetooth() -> *mut List;
+}
+extern "C" {
+    pub fn b_device_connect(device: *const Device) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn u_device_scan() -> *mut List;
+}
+extern "C" {
+    pub fn u_device_connect() -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn file_open_and_get_descriptor(
+        fname: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn open_serial_port() -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn test() -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct node {
@@ -354,19 +377,4 @@ extern "C" {
 }
 extern "C" {
     pub fn free_list(list: *mut List);
-}
-extern "C" {
-    pub fn test() -> *mut Device;
-}
-extern "C" {
-    pub fn b_device_scan_bluetooth() -> *mut List;
-}
-extern "C" {
-    pub fn b_device_connect(device: *const Device) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn u_init_server() -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn u_device_connect(ip_adress: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }

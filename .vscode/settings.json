@@ -15,7 +15,8 @@
         "string.h": "c",
         "fcntl.h": "c",
         "libusb.h": "c",
-        "b_device.h": "c"
+        "b_device.h": "c",
+        "inet.h": "c"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",

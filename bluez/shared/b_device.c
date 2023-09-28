@@ -15,28 +15,6 @@
 
 #define MAX_DEVICES 10 // Maximum number of names
 
-Device *test()
-{
-    printf("This C code is working.\n");
-    Device *device = malloc(sizeof(Device));
-
-    if (device == NULL)
-    {
-        // Handle memory allocation failure
-        return NULL;
-    }
-
-    char *name = "heyoooo";
-    char *mac = "0412490";
-
-    // Allocate memory for the character arrays and copy the strings
-    strcpy(device->name, name);
-    strcpy(device->mac_address, mac);
-
-    printf("This C code is working.\n");
-    return device;
-}
-
 List *device_scan_bluetooth()
 {
     inquiry_info *ii = NULL;

@@ -1,16 +1,13 @@
+use std::os::raw::c_char;
+
 #[allow(warnings)]
 // use self::bindings::Device;
 mod bindings;
 
-pub fn device_connect() {
-    unsafe {
-        let socket_fd = bindings::u_init_server();
-    }
+pub unsafe fn serial_open() -> std::ffi::c_int {
+    bindings::open_serial_port()
 }
 
-pub fn connect_server() {
-    unsafe {
-        let s = std::ffi::CString::new("192.168.0.107").unwrap();
-        let socket_fd = bindings::u_device_connect(s.as_ptr());
-    }
+pub fn open_socketfd(name: *const std::ffi::c_char) {
+    unsafe { bindings::file_open_and_get_descriptor(name) };
 }

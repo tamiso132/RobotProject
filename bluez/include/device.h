@@ -24,13 +24,19 @@ List *u_device_scan();
 
 int u_device_connect();
 
-//red - power
-// black - ground
-// white rx -- usb port
-//green tx -- out of the usb port
+// usb to serial
+int file_open_and_get_descriptor(const char *fname);
+int open_serial_port(void);
+
+int test();
+
+// red - power
+//  black - ground
+//  white rx -- usb port
+// green tx -- out of the usb port
 
 // serial port gives
-//RX is 3.3 volt
-//TX is 3.3 volt
+// RX is 3.3 volt
+// TX is 3.3 volt
 
-//robot specs
+// robot specs

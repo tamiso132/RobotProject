@@ -23,6 +23,8 @@ uint8_t calculateChecksum(uint8_t *data, int len)
 int file_open_and_get_descriptor(const char *fname)
 {
     int fd;
+    puts(fname);
+    strcat(fname, "\0");
     fd = open(fname, O_RDWR | O_NONBLOCK);
 
     if (fd < 0)

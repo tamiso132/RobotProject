@@ -1,4 +1,4 @@
-const PATH_TO_C: &str = "bluez/";
+const PATH_TO_C: &str = "dobot/";
 use std::ops::Add;
 
 use bindgen::builder;
@@ -6,10 +6,10 @@ use glob::glob;
 fn main() {
     let include = format!("{}include", PATH_TO_C);
 
-    let entries = glob("bluez/**/*.c").expect("Failed to read glob pattern");
+    let entries = glob("dobot/**/*.c").expect("Failed to read glob pattern");
 
     let bindings = builder()
-        .header("bluez/bluegen.h")
+        .header("dobot/bluegen.h")
         .clang_arg("-Ibluez/include")
         .generate()
         .unwrap();

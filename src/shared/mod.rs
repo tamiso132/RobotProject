@@ -5,7 +5,7 @@ use std::os::raw::c_char;
 mod bindings;
 
 pub unsafe fn serial_open() -> std::ffi::c_int {
-    bindings::open_serial_port()
+    bindings::test()
 }
 
 pub fn open_socketfd(name: *const std::ffi::c_char) -> std::ffi::c_int {

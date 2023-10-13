@@ -1,6 +1,6 @@
 {
     "C_Cpp.default.includePath": [
-        "bluez/include"
+        "dobot/include"
     ],
     "files.associations": {
         "bluetooth.h": "c",
@@ -16,7 +16,8 @@
         "fcntl.h": "c",
         "libusb.h": "c",
         "b_device.h": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "system_error": "c"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",

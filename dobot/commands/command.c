@@ -19,12 +19,12 @@ struct __attribute__((packed)) __response_header
     uint8_t ctrl;
 };
 
-#define RESPONSE_STRUCT(name, body)                       \
-    struct __attribute__((packed)) name##Response         \
-    {                                                     \
-        struct __response_header info;                    \
-        struct name##body; /* also checksum thing here */ \
-        uint8_t checksum;                                 \
+#define RESPONSE_STRUCT(name, body)                   \
+    struct __attribute__((packed)) name##Response     \
+    {                                                 \
+        struct __response_header info;                \
+        struct name##; /* also checksum thing here */ \
+        uint8_t checksum;                             \
     };
 
 RESPONSE_STRUCT(GetPose, { float x; float y; float z; float r; float join_angle[4]; });

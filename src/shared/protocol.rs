@@ -1,30 +1,77 @@
 use std::ffi::c_float;
 use std::ffi::c_int;
+use std::mem::size_of;
 
 use super::{read, write};
-pub const HEADER: [u8; 2] = [0xAA, 0xAA];
+pub const HEADER: u16 = 0xAA | 0xAA << 8;
+
+struct FloatCustom {
+    hex_float: [u8; 4],
+}
+impl FloatCustom {
+    fn to_float() -> c_float {
+        return 1 as c_float; // TODO
+    }
+}
 
 macro_rules! RESPONSE {
-    ($name:ident, { $($field:ident : $ty:ty),* }) => {
-        #[repr(C)]
-        struct $name {
+    ($struct_name_r:ident, $struct_name_s:ident,  {$($field_r:ident : $ty_r:ty),* }, {$($field_s:ident : $ty_s:ty),* }, $id:expr, $ctrl:expr) => {
+        #[repr(C, packed)]
+        struct  $struct_name_r {
             header: u16,
             len: u8,
             id: u8,
             ctrl: u8,
-            $($field: $ty),*
+           $($field_r: $ty_r),*,
             checksum:u8,
+        }
+        #[repr(C, packed)]
+        struct $struct_name_s {
+            header: u16,
+            len:u8,
+            id:u8,
+            ctrl:u8,
+            $($field_s: $ty_s),*
+            checksum:u8
+        }
+
+        impl $struct_name_s{
+            fn new($($field_s: $ty_s),*) -> Self{
+                let header = HEADER;
+                let mut len:u8 = 0;
+                let id = $id;
+                let ctrl = $ctrl;
+                len += 2;
+
+                $(
+                    len += std::mem::size_of::<$ty_s>();
+                )*
+
+                Self{
+                    header,
+                    len,
+                    id,
+                    ctrl,
+                    $(
+                    $field_s
+                    )*
+                    checksum:0,
+                }
+            }
         }
     };
 }
-RESPONSE!(GetPoseResponse,
-{
-    x:c_float,
-    y:c_float,
-    z:c_float,
-    r:c_float,
-    joint_angles:[c_float;4]
-});
+RESPONSE!(GetPoseR, GetPoseS, {
+    x: FloatCustom,
+    y: FloatCustom,
+    z: FloatCustom,
+    r: FloatCustom,
+    joint_angle: [FloatCustom; 4]
+},{}, 10, 0);
+
+unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
+    ::core::slice::from_raw_parts((p as *const T) as *const u8, ::core::mem::size_of::<T>())
+}
 
 fn calculate_checksum(payload: &Vec<u8>) -> u8 {
     let mut amount: u8 = 0;
@@ -35,20 +82,10 @@ fn calculate_checksum(payload: &Vec<u8>) -> u8 {
 }
 
 fn get_pose(fd: c_int) {
-    let mut payload = vec![0x0A, 0x00];
-    let len = payload.len() as u8;
-    let checksum = calculate_checksum(&payload);
-
-    let mut command: Vec<u8> = vec![];
-
-    command.extend(HEADER);
-    command.push(len);
-    command.append(&mut payload);
-    command.push(checksum);
-    let mut bytes;
+    let get_pose_command = GetPoseS::new();
     unsafe {
-        write(fd, command);
-
-        let bytes_read = read(fd, 256, bytes);
+        let bytes = any_as_u8_slice(&get_pose_command);
+        write(fd, bytes.to_vec());
+        read(fd, size_of(), bytes)
     }
 }

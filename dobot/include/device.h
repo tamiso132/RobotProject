@@ -13,7 +13,7 @@ typedef struct Device
     char mac_address[MAC_ADRESS_LENGTH];
 } Device;
 
-void device_write(int socket, uint8_t *bytes, int n);
+int device_write(int socket, uint8_t *bytes, int n);
 int device_read(int socket, int bytes_to_read, uint8_t *bytes);
 
 List *b_device_scan_bluetooth();

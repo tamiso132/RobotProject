@@ -9,9 +9,7 @@
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h>  // write(), read(), close()
 
-
 #include "device.h"
-#include "command.h"
 
 #define SERIAL_PORT_PATH "/dev/ttyS0\0"
 
@@ -79,16 +77,18 @@ int configure_serial(int fd)
         close(fd);
         return 1;
     }
+    printf("Configuration done of serial\n");
 }
 int test_read()
 {
-    const char *port = "/dev/ttyUSB0"; // Replace with your serial port name
+    const char *port = "/dev/ttyUSB1"; // Replace with your serial port name
 
     // Open the serial port
     int fd = open(port, O_RDWR | O_NOCTTY);
     if (fd == -1)
     {
-        perror("Error opening serial port");
+        perror("Error opening serial port\n");
+        printf("Error opening serial port\n");
         return 1;
     }
 }
@@ -96,8 +96,7 @@ int test_read()
 int test()
 {
     int fd = open_serial_port();
-   // reset_pose(fd, 60.0, 60.0);
-    RobotPos pos = get_pose(fd);
+    // reset_pose(fd, 60.0, 60.0);
 }
 
 // black --> ground

@@ -251,7 +251,11 @@ fn bindgen_test_layout_Device() {
     );
 }
 extern "C" {
-    pub fn device_write(socket: ::std::os::raw::c_int, bytes: *mut u8, n: ::std::os::raw::c_int);
+    pub fn device_write(
+        socket: ::std::os::raw::c_int,
+        bytes: *mut u8,
+        n: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn device_read(

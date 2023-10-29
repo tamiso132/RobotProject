@@ -3,7 +3,6 @@ use std::os::raw::c_char;
 #[allow(warnings)]
 // use self::bindings::Device;
 mod bindings;
-pub mod protocol;
 
 pub unsafe fn serial_open() -> c_int {
     unsafe { return bindings::open_serial_port() };

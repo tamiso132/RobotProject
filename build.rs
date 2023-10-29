@@ -13,7 +13,7 @@ fn main() {
         .clang_arg("-Ibluez/include")
         .generate()
         .unwrap();
-    bindings.write_to_file("src/shared/bindings.rs").unwrap();
+    bindings.write_to_file("src/cbinding/bindings.rs").unwrap();
 
     let mut c_paths = vec![];
     for c in entries {

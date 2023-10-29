@@ -1,4 +1,4 @@
-use super::{read, write};
+use crate::cbinding::{read, write};
 use serde::{Deserialize, Serialize};
 use std::ffi::c_float;
 use std::ffi::c_int;
@@ -16,9 +16,6 @@ pub struct FloatCustom {
 pub struct Empty;
 impl FloatCustom {
     pub fn to_float(&mut self) -> f32 {
-        for e in &self.hex_float {
-            print!("hex: {:#02x}\n", e);
-        }
         let hex_big: u32 = (self.hex_float[3] as u32)
             | (self.hex_float[2] as u32) << 8
             | (self.hex_float[1] as u32) << 16
@@ -27,9 +24,20 @@ impl FloatCustom {
         println!("{:#02x}, ", hex_big);
         f32::from_bits(hex_big)
     }
+
+    pub fn new(f: f32) -> FloatCustom {
+        let float = f32::to_bits(f);
+        let mut hex_float: [u8; 4] = [0, 0, 0, 0];
+        hex_float[3] = float as u8;
+        hex_float[2] = (float << 8) as u8;
+        hex_float[1] = (float << 16) as u8;
+        hex_float[0] = (float << 24) as u8;
+
+        Self { hex_float }
+    }
 }
 
-macro_rules! RESPONSE {
+macro_rules! response {
     ($struct_name_r:ident, {$($field_s:ident : $ty_s:ty),* }, {$($field_r:ident : $ty_r:ty),* }, $id:expr, $ctrl:expr) => {
         #[repr(C)]
        #[derive(Serialize, Deserialize, Debug)]
@@ -96,10 +104,10 @@ macro_rules! RESPONSE {
 }
 ///
 /// This is if the specific command has both a set and get
-/// 
+///
 /// Parameters
 /// (Structure Name, Fields, ID)
-macro_rules! RESPONSE2 {
+macro_rules! response2 {
     ($struct_name:ident, {$($field:ident : $ty:ty),* }, $id:expr) => {
         #[repr(C)]
        #[derive(Serialize, Deserialize, Debug)]
@@ -206,14 +214,14 @@ macro_rules! RESPONSE2 {
             }
             pub fn send_get_command(fd:c_int) -> Option<$struct_name>{
                 let mut header = bincode::serialize(&HEADER).unwrap();
-                let mut id:u8 = $id;
-                let mut ctrl:u8 = 0x00;
-                let mut len:u8 = 2;
+                let id:u8 = $id;
+                let ctrl:u8 = 0x00;
+                let len:u8 = 2;
                 let mut checksum:u8 = 0;
-                checksum.overflowing_add(id);
-                checksum.overflowing_add(ctrl);
+                checksum = checksum.overflowing_add(id).0;
+                checksum = checksum.overflowing_add(ctrl).0;
                 checksum = !checksum;
-                checksum.overflowing_add(1);
+                checksum = checksum.overflowing_add(1).0;
 
                 let mut send_packet:Vec<u8> = vec!();
 
@@ -238,18 +246,6 @@ macro_rules! RESPONSE2 {
     };
 }
 
-macro_rules! TEST  {
-    ($( $field_name:ident: $field_type:ty ),*) => {
-        pub fn generate($($field_name: $field_type), *){
-            println!("Function  called with parameters: {:?}", ( $( $field_name ),* ));
-        }
-    };
-}
-
-TEST!(a:i32, b:i32);
-
-
-
 unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
     ::core::slice::from_raw_parts((p as *const T) as *const u8, ::core::mem::size_of::<T>())
 }
@@ -264,7 +260,7 @@ fn calculate_checksum(payload: &Vec<u8>) -> u8 {
     return !amount + 1;
 }
 
-RESPONSE!(GetPoseR, {},
+response!(GetPoseR, {},
 { 
     x: FloatCustom,
     y: FloatCustom,
@@ -273,6 +269,6 @@ RESPONSE!(GetPoseR, {},
     joint_angle: [FloatCustom; 4]
 }, 10, 0);
 
-RESPONSE2!(SuctionCup, {is_ctrl_enabled:u8, is_sucked:u8}, 62);
-RESPONSE2!(JogJointParam, {velocity:[FloatCustom; 4], acceleration:[FloatCustom; 4]}, 70);
-RESPONSE2!(JogCoordinateParam, {velocity:[FloatCustom; 4], acceleration:[FloatCustom; 4]}, 71);
+response2!(SuctionCup, {is_ctrl_enabled:u8, is_sucked:u8}, 62);
+response2!(JogJointParam, {velocity:[FloatCustom; 4], acceleration:[FloatCustom; 4]}, 70);
+response2!(JogCoordinateParam, {velocity:[FloatCustom; 4], acceleration:[FloatCustom; 4]}, 71);

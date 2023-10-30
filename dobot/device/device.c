@@ -11,13 +11,20 @@
 
 int device_write(int socket, uint8_t *bytes, int n)
 {
-    return write(socket, bytes, n);
+    int f = write(socket, bytes, n);
+    fsync(socket);
+    return f;
 }
 
 int device_read(int socket, int bytes_to_read, uint8_t *buffer)
 {
     int n = read(socket, buffer, bytes_to_read);
     return n;
+}
+
+int close_socket(int socket)
+{
+    close(socket);
 }
 
 int device_non_blocking_read(int socket, uint8_t *buffer, int n)

@@ -268,6 +268,9 @@ extern "C" {
     pub fn b_device_scan_bluetooth() -> *mut List;
 }
 extern "C" {
+    pub fn close_socket(socket: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn b_device_connect(device: *const Device) -> ::std::os::raw::c_int;
 }
 extern "C" {

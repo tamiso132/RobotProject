@@ -1,1 +1,1 @@
-mod robotprotocol;
+pub mod robotprotocol;

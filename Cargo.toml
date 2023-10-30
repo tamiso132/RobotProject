@@ -17,10 +17,4 @@ glob = "0.3.1"
 bindgen = "0.68.1"
 
 
-[[bin]]
-name = "server"
-path = "src/server/main.rs"
 
-[[bin]]
-name = "client"
-path = "src/client/main.rs"

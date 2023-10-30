@@ -18,6 +18,8 @@ int device_read(int socket, int bytes_to_read, uint8_t *bytes);
 
 List *b_device_scan_bluetooth();
 
+int close_socket(int socket);
+
 int b_device_connect(const Device *device);
 
 List *u_device_scan();

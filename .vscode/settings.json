@@ -17,7 +17,11 @@
         "libusb.h": "c",
         "b_device.h": "c",
         "inet.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "span": "cpp"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",

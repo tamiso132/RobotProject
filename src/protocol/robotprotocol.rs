@@ -13,7 +13,6 @@ pub struct QueueIndex {}
 impl QueueIndex {
     pub fn generate(val: [u8; 8]) -> u64 {
         let num = u64::from_le_bytes(val);
-        println!("Val: {}", num);
         num
     }
 }
@@ -37,12 +36,7 @@ impl FloatCustom {
     }
 
     pub fn new(f: f32) -> FloatCustom {
-        let float = f32::to_bits(f);
-        let mut hex_float: [u8; 4] = [0, 0, 0, 0];
-        hex_float[3] = float as u8;
-        hex_float[2] = (float << 8) as u8;
-        hex_float[1] = (float << 16) as u8;
-        hex_float[0] = (float << 24) as u8;
+        let hex_float = f32::to_le_bytes(f);
 
         Self { hex_float }
     }
@@ -67,7 +61,7 @@ macro_rules! response {
         impl $struct_name_r{
             pub fn send_immediate_command(fd:c_int, $($field_s: $ty_s),*) -> Option<$struct_name_r>{
                 let mut id:u8 = $id;
-                let mut ctrl:u8 = QUEUE_FLAG | RW_FLAG;
+                let mut ctrl:u8 = 0;
                 let mut len:u8 = 2;
                 let mut checksum:u8 = 0;
                 checksum += $id;
@@ -100,12 +94,17 @@ macro_rules! response {
                 checksum = u8::overflowing_add(checksum, 1).0;
                 send_packet.push(checksum);
 
+                for e in &send_packet{
+                    println!("{:#02x}", e);
+                }
+
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name_r>();
 
                 let mut buffer:[u8; RETURN_PACKET_SIZE] = [0; RETURN_PACKET_SIZE];
                 unsafe{
                     let bytes_written = write(fd, send_packet); // TODO ERROR CHECK
                     let bytes_read = read(fd,buffer.len() as i32, buffer.as_mut_ptr());
+                    println!("Bytes read: {}", bytes_read);
                     let work = bincode::deserialize::<$struct_name_r>(&buffer).unwrap();
                     Some(work)
                 }
@@ -122,7 +121,6 @@ macro_rules! response {
 macro_rules! response2 {
 
     ($struct_name:ident, {$($field:ident : $ty:ty),* }, $id:expr) => {
-        #[repr(C)]
        #[derive(Serialize, Deserialize, Debug)]
         pub struct  $struct_name {
             pub header: u16,
@@ -135,11 +133,27 @@ macro_rules! response2 {
 
         impl $struct_name{
             pub fn send_immediate_command(fd:c_int, $($field: &$ty),*) -> Option<u64>{
-
-                return Self::send_packet(fd, 0, $(&$field),*);
+                let mut ret =  Self::send_packet(fd, 0, $(&$field),*);
+               while ret.1 <= 0 {
+                    unsafe{
+                    ret = Self::send_packet(fd, 0, $(&$field),*);
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                }
+               }
+               ret.0
             }
-            pub fn send_queue_command(fd:c_int, $($field: &$ty),*) -> Option<u64>{
-               return Self::send_packet(fd, 1, $(&$field),*);
+            pub fn send_queue_command(fd: c_int, $($field: &$ty),*) -> Option<u64>{
+
+               let mut ret =  Self::send_packet(fd, 1, $(&$field),*);
+               let mut buffer:[u8; 256] = [0; 256];
+               while ret.1 <= 0 {
+                unsafe{
+                    ret = Self::send_packet(fd, 1, $(&$field),*);
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                }
+               }
+               ret.0
+
             }
             pub fn send_get_command(fd:c_int) -> Option<$struct_name>{
                 let mut header = bincode::serialize(&HEADER).unwrap();
@@ -159,29 +173,27 @@ macro_rules! response2 {
                 send_packet.push(len);
                 send_packet.push(id);
                 send_packet.push(ctrl);
-                send_packet.push(checksum); // AA AA 02 3E 00 F4
+                send_packet.push(checksum);
 
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name>();
 
                 let mut buffer:[u8; RETURN_PACKET_SIZE] = [0; RETURN_PACKET_SIZE];
-                println!("Suction packet");
                 for e in &send_packet{
-                    println!("{}", e);
+                  //  println!("{}", e);
                 }
-                println!("END");
                 unsafe{
                     let bytes_written = write(fd, send_packet);
                     let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
-                    println!("bytes read: {}", bytes_read);
+                  //  println!("bytes read: {}", bytes_read);
                     for index in 0..bytes_read-1{
-                        print!("{} ", buffer[index as usize]);
+                        print!("{:#02x} ", buffer[index as usize]);
                     }
                     let ret = bincode::deserialize::<$struct_name>(&buffer).unwrap();
                     Some(ret)
                 }
             }
 
-            fn send_packet(fd:c_int, queue: u8, $($field: &$ty),*) -> Option<u64>{
+            fn send_packet(fd:c_int, queue: u8, $($field: &$ty),*) -> (Option<u64>, i32){
              let mut header = bincode::serialize(&HEADER).unwrap();
                 let id:u8 = $id;  // 0, 1, 2, 3, 4,
                 let mut ctrl = RW_FLAG;
@@ -210,8 +222,12 @@ macro_rules! response2 {
 
 
                // println!("Checksum {}", checksum);
+              //  println!("Checksum total {:#02b}", checksum);
                 checksum = !checksum;
+              //  println!("Checksum inverse {:#02b}", checksum);
                 checksum = u8::overflowing_add(checksum, 1).0;
+               // println!("Checksum Done {:#02b}", checksum);
+              //  println!("Len: {}", len);
 
                 s_packet.append(&mut header);
                 s_packet.push(len);
@@ -220,30 +236,32 @@ macro_rules! response2 {
                 s_packet.append(&mut data_vec);
                 s_packet.push(checksum); // AA AA 02 3E 00 F4
 
-                let mut buffer:[u8; 256] = [0; 256];
+                //  println!("New Start");
                 for e in &s_packet{
-               // println!("{:#02x}", e);
+                    //     println!("{}", e);
                 }
 
 
                 unsafe{
                     let bytes_written = write(fd, s_packet);
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                    let mut buffer:[u8; 256] = [0; 256];
                     let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
 
                     println!("bytes read: {}", bytes_read);
                     for i in 0..bytes_read{
-                        println!("{}", &buffer[i as usize]);
+                       // println!("{}", &buffer[i as usize]);
                     }
                     if queue == 1 && bytes_read != 0{
                         let mut queue_buffer:[u8;8] = [0, 0, 0, 0, 0, 0, 0, 0];
                         queue_buffer.copy_from_slice(&buffer[5..13]);
-                        return Some(QueueIndex::generate(queue_buffer));
+                        return (Some(QueueIndex::generate(queue_buffer)), bytes_read);
                     }
 
 
 
                     let ret = bincode::deserialize::<$struct_name>(&buffer).unwrap();
-                    None
+                    (None, bytes_read)
                 }
             }
         }
@@ -293,6 +311,8 @@ pub mod ptp {
     use super::FloatCustom;
 
     response2!(Joint, {velocity:[FloatCustom; 4], acceleration:[FloatCustom;4]}, 80);
+    response2!(Coordinate, {xyz_velocity: FloatCustom, r_velocity: FloatCustom, xyz_acceleration:FloatCustom, r_acceleration:FloatCustom}, 81);
+    response2!(Jump, {jump_height: FloatCustom, z_limit:FloatCustom}, 82);
     response2!(Common, {velocity_ratio: FloatCustom, acceleration_ratio:FloatCustom}, 83);
     response2!(Cmd, {ptp_mode: PTPMode, x:FloatCustom, y :FloatCustom, z:FloatCustom, r:FloatCustom }, 84);
 
@@ -326,7 +346,7 @@ pub mod queue {
     response2!(StartExec, {}, 240);
     response2!(StopExec, {}, 241);
     response2!(ClearExec, {}, 245);
-    response2!(CurrentIndex, {}, 246);
+    response2!(CurrentIndex, { current_index: u64 }, 246);
 }
 
 pub mod homing {

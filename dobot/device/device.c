@@ -5,20 +5,24 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <termios.h>
 
 #include "device.h"
 #include "utility.h"
 
-int device_write(int socket, uint8_t *bytes, int n)
+int device_write(int fd, uint8_t *bytes, int n)
 {
-    int f = write(socket, bytes, n);
+    int f = write(fd, bytes, n);
+    tcdrain(fd);
+    set_signal(0, fd);
     fsync(socket);
     return f;
 }
 
-int device_read(int socket, int bytes_to_read, uint8_t *buffer)
+int device_read(int fd, int bytes_to_read, uint8_t *buffer)
 {
-    int n = read(socket, buffer, bytes_to_read);
+    int n = read(fd, buffer, bytes_to_read);
+    set_signal(1, fd);
     return n;
 }
 

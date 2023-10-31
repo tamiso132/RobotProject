@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
 typedef struct List List;
 
 #define MAX_NAME_LENGTH 248 // Maximum length of each name
@@ -27,8 +29,10 @@ List *u_device_scan();
 int u_device_connect();
 
 // usb to serial
-int file_open_and_get_descriptor(const char *fname);
+int *file_open_and_get_descriptor(const char *fname);
 int open_serial_port(void);
+
+int set_signal(int param, int fd);
 
 int test();
 

@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <signal.h>
+
 // Linux headers
 #include <fcntl.h>   // Contains file controls like O_RDWR
 #include <errno.h>   // Error integer and strerror() function
@@ -16,13 +22,13 @@
 int configure(int fd);
 int configure_serial(int fd);
 
-int file_open_and_get_descriptor(const char *fname)
+int *file_open_and_get_descriptor(const char *fname)
 {
-    const char *port = "/dev/ttyUSB0"; // Replace with your serial port name
-
     // Open the serial port
-    int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (fd < 0)
+    int fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+
+    // FILE *file = fopen("/dev/ttyUSB1", O_RDWR | O_NOCTTY | O_NDELAY);
+    if (fd == -1)
     {
         perror("Error opening serial port");
         return 1;
@@ -36,6 +42,36 @@ int open_serial_port(void)
     int fd = file_open_and_get_descriptor("f");
     configure_serial(fd);
     return fd;
+}
+
+int set_signal(int param, int fd)
+{
+    int stat_;
+
+    if (fd == -1)
+        return;
+
+    if (ioctl(fd, TIOCMGET, &stat_) == -1)
+    {
+        return;
+    }
+
+    /* DTR */
+    if (param == 0)
+    {
+        if (stat_ & TIOCM_DTR)
+            stat_ &= ~TIOCM_DTR;
+        else
+            stat_ |= TIOCM_DTR;
+    }
+    /* RTS */
+    else if (param == 1)
+    {
+        if (stat_ & TIOCM_RTS)
+            stat_ &= ~TIOCM_RTS;
+        else
+            stat_ |= TIOCM_RTS;
+    }
 }
 
 int configure_serial(int fd)
@@ -72,6 +108,7 @@ int configure_serial(int fd)
 
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd, TCSANOW, &options);
+
     // serialConfig.c_cflag &= ~CSIZE;  // Clear the data bits field
     // serialConfig.c_cflag |= CS8;     // Set 8 data bits
     // serialConfig.c_cflag &= ~PARENB; // No parity

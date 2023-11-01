@@ -5,97 +5,88 @@ use std::{
 
 use robotproject::{
     self,
-    cbinding::{self, close_port},
+    cbinding::{self, close_port, read, write},
     protocol::robotprotocol::{self, FloatCustom},
 };
 fn main() {
     unsafe {
         let fd = cbinding::serial_open();
 
-       // robotprotocol::SuctionCup::send_immediate_command(fd, &1, &1);
-        robotprotocol::queue::StopExec::send_immediate_command(fd);
-        robotprotocol::queue::ClearExec::send_immediate_command(fd);
-        robotprotocol::queue::StopExec::send_immediate_command(fd);
-        let velocity = [
-            FloatCustom::new(200.0),
-            FloatCustom::new(200.0),
-            FloatCustom::new(200.0),
-            FloatCustom::new(200.0),
-        ];
-        let acceleration = [
+        let x = FloatCustom::new(200.0);
+        let y = FloatCustom::new(200.0);
+        let z = FloatCustom::new(200.0);
+        let r = FloatCustom::new(200.0);
+
+        let ax = [
             FloatCustom::new(200.0),
             FloatCustom::new(200.0),
             FloatCustom::new(200.0),
             FloatCustom::new(200.0),
         ];
 
-        println!("C now");
-        let c =
-            robotprotocol::ptp::Joint::send_queue_command(fd, &velocity, &acceleration).unwrap();
-
-        println!("First {}", c);
-        let d = robotprotocol::ptp::Coordinate::send_queue_command(
+        robotprotocol::ptp::Joint::send_immediate_command(fd, &[x, y, z, r], &ax);
+        robotprotocol::ptp::Coordinate::send_immediate_command(
             fd,
             &FloatCustom::new(200.0),
             &FloatCustom::new(200.0),
             &FloatCustom::new(200.0),
-            &FloatCustom::new(200.0),
-        )
-        .unwrap();
-        println!("Second {}", d);
-        robotprotocol::ptp::Jump::send_queue_command(
+            &r,
+        );
+        robotprotocol::ptp::Jump::send_immediate_command(
             fd,
             &FloatCustom::new(10.0),
             &FloatCustom::new(200.0),
         );
-        println!("Third");
-        robotprotocol::ptp::Common::send_queue_command(
+        robotprotocol::ptp::Common::send_immediate_command(
             fd,
             &FloatCustom::new(100.0),
             &FloatCustom::new(100.0),
         );
-        println!("Fourth");
-        let pos = robotprotocol::GetPoseR::send_immediate_command(fd).unwrap();
-        println!("Fifth");
 
-        let mut pos_x = pos.x;
-        let mut pos_y = pos.y;
-        let mut pos_z = pos.z;
-        let mut r_head = pos.r;
+        let pose = robotprotocol::GetPoseR::send_immediate_command(fd).unwrap();
 
-        let mut x = FloatCustom::new(0.0);
-        let mut y = FloatCustom::new(0.0);
-        let mut z = FloatCustom::new(0.0);
+        let mut xx = pose.x;
+        let mut yy = pose.y;
+        let mut zz = pose.z;
+        let mut rr = pose.r;
 
-        let mut last_index = 0;
+        let mut mov_x = 0.0;
+        let mut mov_y = 0.0;
+        let mut mov_z = 10.0;
+        let mut mov_flag = -1.0;
 
-        for i in 0..4 {
-            last_index = robotprotocol::ptp::Cmd::send_queue_command(
-                fd,
-                &robotprotocol::ptp::PTPMode::MovlXYZ,
-                &FloatCustom::new(x.to_float() + pos_x.to_float()),
-                &FloatCustom::new(y.to_float() + pos_y.to_float()),
-                &FloatCustom::new(z.to_float() + pos_z.to_float()),
-                &FloatCustom::new(x.to_float() + pos_x.to_float()),
-            )
-            .unwrap();
-            println!("China number 2 {}", last_index);
-            pos_x = FloatCustom::new(pos_x.to_float() + 10.0);
-        }
-        robotprotocol::queue::StartExec::send_immediate_command(fd);
-        let mut curr = robotprotocol::queue::CurrentIndex::send_get_command(fd)
-            .unwrap()
-            .current_index;
-        while curr < last_index {
-            thread::sleep(Duration::from_millis(500));
+        loop {
+            mov_flag *= -1.0;
 
-            println!(
-                "Still working hard, \ncurrent index: {}\nlast index: {}",
-                curr, last_index
-            );
-            curr = robotprotocol::queue::CurrentIndex::send_get_command(fd)
-                .unwrap()
-                .current_index;
+            for i in 0..5 {
+                robotprotocol::ptp::Cmd::send_immediate_command(
+                    fd,
+                    &robotprotocol::ptp::PTPMode::MovlXYZ,
+                    &FloatCustom::new(xx.to_float() + mov_x),
+                    &FloatCustom::new(yy.to_float() + mov_y),
+                    &FloatCustom::new(zz.to_float() + mov_z),
+                    &FloatCustom::new(rr.to_float()),
+                );
+
+                mov_x += 10.0 * mov_flag;
+
+                robotprotocol::ptp::Cmd::send_immediate_command(
+                    fd,
+                    &robotprotocol::ptp::PTPMode::MovlXYZ,
+                    &FloatCustom::new(xx.to_float() + mov_x),
+                    &FloatCustom::new(yy.to_float() + mov_y),
+                    &FloatCustom::new(zz.to_float() + mov_z),
+                    &FloatCustom::new(rr.to_float()),
+                );
+                robotprotocol::ptp::Cmd::send_immediate_command(
+                    fd,
+                    &robotprotocol::ptp::PTPMode::MovlXYZ,
+                    &FloatCustom::new(xx.to_float() + mov_x.clone()),
+                    &FloatCustom::new(yy.to_float() + mov_y),
+                    &FloatCustom::new(zz.to_float()),
+                    &FloatCustom::new(rr.to_float()),
+                );
+            }
         }
     }
 }

@@ -26,8 +26,10 @@ int device_read(int fd, int bytes_to_read, uint8_t *buffer)
     return n;
 }
 
-int close_socket(int socket)
+int close_socket(int fd)
 {
+    tcflush(fd, TCOFLUSH);
+    tcflush(fd, TCIFLUSH);
     close(socket);
 }
 

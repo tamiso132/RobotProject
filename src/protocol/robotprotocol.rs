@@ -23,16 +23,11 @@ pub struct FloatCustom {
     hex_float: [u8; 4],
 }
 #[repr(C, packed)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct Empty;
 impl FloatCustom {
     pub fn to_float(&mut self) -> f32 {
-        let hex_big: u32 = (self.hex_float[3] as u32)
-            | (self.hex_float[2] as u32) << 8
-            | (self.hex_float[1] as u32) << 16
-            | (self.hex_float[3] as u32) << 24;
-
-        f32::from_bits(hex_big)
+        f32::from_le_bytes(self.hex_float.clone())
     }
 
     pub fn new(f: f32) -> FloatCustom {
@@ -47,8 +42,8 @@ impl FloatCustom {
 
 macro_rules! response {
     ($struct_name_r:ident, {$($field_s:ident : $ty_s:ty),* }, {$($field_r:ident : $ty_r:ty),* }, $id:expr, $ctrl:expr) => {
-        #[repr(C)]
-       #[derive(Serialize, Deserialize, Debug)]
+        #[repr(C, packed)]
+       #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
         pub struct  $struct_name_r {
             pub header: u16,
             pub len: u8,
@@ -94,17 +89,22 @@ macro_rules! response {
                 checksum = u8::overflowing_add(checksum, 1).0;
                 send_packet.push(checksum);
 
+                 println!("write bytes");
                 for e in &send_packet{
-                    println!("{:#02x}", e);
+                      println!("{:#02x}", e);
                 }
 
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name_r>();
 
-                let mut buffer:[u8; RETURN_PACKET_SIZE] = [0; RETURN_PACKET_SIZE];
+                let mut buffer:[u8; 256] = [0; 256];
                 unsafe{
                     let bytes_written = write(fd, send_packet); // TODO ERROR CHECK
-                    let bytes_read = read(fd,buffer.len() as i32, buffer.as_mut_ptr());
-                    println!("Bytes read: {}", bytes_read);
+                    let bytes_read = read(fd,256, buffer.as_mut_ptr());
+
+                    println!("Read bytes: {}\n", bytes_read);
+                    for i in 0..bytes_read{
+                        println!("{:#02x}", &buffer[i as usize]);
+                    }
                     let work = bincode::deserialize::<$struct_name_r>(&buffer).unwrap();
                     Some(work)
                 }
@@ -121,7 +121,8 @@ macro_rules! response {
 macro_rules! response2 {
 
     ($struct_name:ident, {$($field:ident : $ty:ty),* }, $id:expr) => {
-       #[derive(Serialize, Deserialize, Debug)]
+       #[repr(C, packed)]
+       #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
         pub struct  $struct_name {
             pub header: u16,
             pub len: u8,
@@ -156,41 +157,81 @@ macro_rules! response2 {
 
             }
             pub fn send_get_command(fd:c_int) -> Option<$struct_name>{
-                let mut header = bincode::serialize(&HEADER).unwrap();
-                let id:u8 = $id;
-                let ctrl:u8 = 0;
-                let len:u8 = 2;
+                 let mut id:u8 = $id;
+                let mut ctrl:u8 = 0;
+                let mut len:u8 = 2;
                 let mut checksum:u8 = 0;
-                checksum = checksum.overflowing_add(id).0;
-                checksum = checksum.overflowing_add(ctrl).0;
+                checksum += $id;
+                checksum += ctrl;
 
-                checksum = !checksum;
-                checksum = checksum.overflowing_add(1).0;
 
                 let mut send_packet:Vec<u8> = vec!();
 
-                send_packet.append(&mut header);
-                send_packet.push(len);
-                send_packet.push(id);
-                send_packet.push(ctrl);
+                let mut header1_list = bincode::serialize(&HEADER).unwrap();
+                let mut len_list = bincode::serialize(&len).unwrap();
+                let mut id_list = bincode::serialize(&id).unwrap();
+                let mut ctrl_list = bincode::serialize(&ctrl).unwrap();
+
+                send_packet.append(&mut header1_list);
+                send_packet.append(&mut len_list);
+                send_packet.append(&mut id_list);
+                send_packet.append(&mut ctrl_list);
+
+                checksum = !checksum;
+                checksum = u8::overflowing_add(checksum, 1).0;
                 send_packet.push(checksum);
+
+
 
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name>();
 
-                let mut buffer:[u8; RETURN_PACKET_SIZE] = [0; RETURN_PACKET_SIZE];
                 for e in &send_packet{
-                  //  println!("{}", e);
+                    println!("{:#02x}", e);
                 }
+
+                let mut buffer:[u8; 256] = [0; 256];
                 unsafe{
-                    let bytes_written = write(fd, send_packet);
-                    let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
-                  //  println!("bytes read: {}", bytes_read);
-                    for index in 0..bytes_read-1{
-                        print!("{:#02x} ", buffer[index as usize]);
-                    }
-                    let ret = bincode::deserialize::<$struct_name>(&buffer).unwrap();
-                    Some(ret)
+                    let bytes_written = write(fd, send_packet); // TODO ERROR CHECK
+                    let bytes_read = read(fd,256, buffer.as_mut_ptr());
+                    let work = bincode::deserialize::<$struct_name>(&buffer).unwrap();
+                    Some(work)
                 }
+
+                // let mut header = bincode::serialize(&HEADER).unwrap();
+                // let id:u8 = $id;
+                // let ctrl:u8 = 0;
+                // let len:u8 = 2;
+                // let mut checksum:u8 = 0;
+                // checksum = checksum.overflowing_add(id).0;
+                // checksum = checksum.overflowing_add(ctrl).0;
+
+                // checksum = !checksum;
+                // checksum = checksum.overflowing_add(1).0;
+
+                // let mut send_packet:Vec<u8> = vec!();
+
+                // send_packet.append(&mut header);
+                // send_packet.push(len);
+                // send_packet.push(id);
+                // send_packet.push(ctrl);
+                // send_packet.push(checksum);
+
+                // const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name>();
+
+                // let mut buffer:[u8; 256] = [0; 256];
+                // for e in &send_packet{
+                //   //  println!("{}", e);
+                // }
+                // unsafe{
+                //     let bytes_written = write(fd, send_packet);
+                //     let bytes_read = read(fd,256, buffer.as_mut_ptr());
+                //     println!("bytes read: {}", bytes_read);
+                //     // for index in 0..bytes_read-1{
+                //     //     print!("{:#02x} ", buffer[index as usize]);
+                //     // }
+                //     let ret = bincode::deserialize::<$struct_name>(&buffer).unwrap();
+                //     Some(ret)
+                // }
             }
 
             fn send_packet(fd:c_int, queue: u8, $($field: &$ty),*) -> (Option<u64>, i32){
@@ -206,12 +247,13 @@ macro_rules! response2 {
                 checksum = checksum.overflowing_add(ctrl).0;
 
                 let mut s_packet:Vec<u8> = vec!();
-                let mut data_vec = vec!();
+                let mut data_vec:Vec<u8> = vec!();
 
 
                 $(
                     let mut field = bincode::serialize(&$field).unwrap();
                     len += field.len() as u8;
+                    println!("Len: {}\n", field.len());
                     for f in &field{
                         checksum = u8::overflowing_add(*f, checksum).0;
 
@@ -236,11 +278,11 @@ macro_rules! response2 {
                 s_packet.append(&mut data_vec);
                 s_packet.push(checksum); // AA AA 02 3E 00 F4
 
-                //  println!("New Start");
-                for e in &s_packet{
-                    //     println!("{}", e);
-                }
 
+                 for e in &s_packet{
+                    println!("{:#02x}", e);
+                }
+                //  println!("New Start");
 
                 unsafe{
                     let bytes_written = write(fd, s_packet);
@@ -248,9 +290,7 @@ macro_rules! response2 {
                     let mut buffer:[u8; 256] = [0; 256];
                     let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
 
-                    println!("bytes read: {}", bytes_read);
                     for i in 0..bytes_read{
-                       // println!("{}", &buffer[i as usize]);
                     }
                     if queue == 1 && bytes_read != 0{
                         let mut queue_buffer:[u8;8] = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -260,7 +300,6 @@ macro_rules! response2 {
 
 
 
-                    let ret = bincode::deserialize::<$struct_name>(&buffer).unwrap();
                     (None, bytes_read)
                 }
             }
@@ -317,7 +356,8 @@ pub mod ptp {
     response2!(Cmd, {ptp_mode: PTPMode, x:FloatCustom, y :FloatCustom, z:FloatCustom, r:FloatCustom }, 84);
 
     #[repr(u8)]
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+    #[serde(into = "u8")]
     pub enum PTPMode {
         JumpXYZ = 0, // JUMP mode, (x,y,z,r) is the target point in Cartesian coordinate system
         MovjXYZ,     // MOVJ mode, (x,y,z,r) is the target point in Cartesian coordinate system
@@ -328,6 +368,12 @@ pub mod ptp {
         MovjINC,     // MOVJ mode, (x,y,z,r) is the angle increment in Joint coordinate system
         MovlINC, // MOVL mode, (x,y,z,r) is the Cartesian coordinate increment in Joint coordinate system
         MovjXYZINC, // MOVJ mode, (x,y,z,r) is the Cartesian coordinate increment in Cartesian coordinate
+    }
+
+    impl From<PTPMode> for u8 {
+        fn from(value: PTPMode) -> u8 {
+            value as u8
+        }
     }
 }
 
@@ -347,6 +393,7 @@ pub mod queue {
     response2!(StopExec, {}, 241);
     response2!(ClearExec, {}, 245);
     response2!(CurrentIndex, { current_index: u64 }, 246);
+    response2!(StopForceExec, {}, 242);
 }
 
 pub mod homing {

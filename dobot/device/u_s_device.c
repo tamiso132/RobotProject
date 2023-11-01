@@ -85,9 +85,18 @@ int configure_serial(int fd)
         return 1;
     }
 
+    if (flock(fd, LOCK_EX | LOCK_NB) == -1)
+    {
+        printf("Cannot lock port\n");
+        return -1;
+    }
+
     // Set baud rate, data bits, stop bits, and parity
     cfsetispeed(&options, B115200); // Baud rate
     cfsetospeed(&options, B115200);
+
+    options.c_cflag = B115200;
+
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
     options.c_cflag &= ~PARENB;
@@ -95,18 +104,24 @@ int configure_serial(int fd)
     options.c_cflag &= ~CSTOPB;
 
     options.c_cflag |= CREAD | CLOCAL;
-    options.c_cc[VMIN] = 0;
-    options.c_cc[VTIME] = 10;
+    options.c_cc[VMIN] = 1;
+    options.c_cc[VTIME] = 0;
 
-    options.c_cflag &= ~CRTSCTS;                // turn off hardware flow control
-    options.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off sowftware flow control
+    // options.c_cflag &= ~CRTSCTS;                // turn off hardware flow control
+    // options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
+    options.c_cflag |= CLOCAL;
+
     options.c_lflag &= ~ICANON;
     options.c_lflag &= ~ISIG;
     options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); // Disable any special handling of received bytes
     options.c_oflag &= ~OPOST;                                                       // Prevent special interpretation of output bytes (e.g. newline chars)
     options.c_oflag &= ~ONLCR;                                                       // Prevent conversion of newline to carriage return/line feed
 
+    options.c_oflag = 0;
+    options.c_lflag = 0;
+
     tcflush(fd, TCIFLUSH);
+    tcflush(fd, TCOFLUSH);
     tcsetattr(fd, TCSANOW, &options);
 
     // serialConfig.c_cflag &= ~CSIZE;  // Clear the data bits field

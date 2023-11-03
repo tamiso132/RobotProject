@@ -2251,6 +2251,9 @@ extern "C" {
 extern "C" {
     pub fn __overflow(arg1: *mut FILE, arg2: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
+extern "C" {
+    pub fn takee_pic(filename: *mut ::std::os::raw::c_char);
+}
 pub type Callback = ::std::option::Option<unsafe extern "C" fn(bytes: *mut u8, size: u32)>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

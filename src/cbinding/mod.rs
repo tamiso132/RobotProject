@@ -15,6 +15,7 @@ pub unsafe fn close_port(fd: c_int) {
 }
 
 pub unsafe fn read(socket: c_int, len: i32, bytes: *mut u8) -> c_int {
+    
     return bindings::device_read(socket, len, bytes);
 }
 pub unsafe fn write(socket: c_int, bytes: Vec<u8>) -> c_int {

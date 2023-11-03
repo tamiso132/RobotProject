@@ -1,9 +1,8 @@
 use std::{
+    ffi::CString,
     thread::{self, Thread},
     time::Duration,
 };
-
-mod camera;
 
 use robotproject::{
     self,
@@ -13,9 +12,15 @@ use robotproject::{
 
 fn main() {
     unsafe {
-        //  let fd = cbinding::serial_open();
+        let s = String::from("HalloWelt!");
+        let cs = CString::new(s).unwrap();
+        let cv: Vec<u8> = cs.into_bytes_with_nul();
+        let mut tmp: Vec<i8> = cv.into_iter().map(|c| c as i8).collect::<_>(); // line 7
+        let _cptr: *mut i8 = tmp.as_mut_ptr();
 
-        camera::take_image();
+        cbinding::bindings::takee_pic(_cptr);
+
+        //  let fd = cbinding::serial_open();
 
         //  let pos = protocol::GetPoseR::send_immediate_command(fd).unwrap();
 

@@ -7,6 +7,8 @@ typedef struct List List;
 #define MAX_NAME_LENGTH 248 // Maximum length of each name
 #define MAC_ADRESS_LENGTH 18
 
+void takee_pic(char *filename);
+
 typedef void (*Callback)(uint8_t *bytes, uint32_t size);
 
 typedef struct Device

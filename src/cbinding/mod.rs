@@ -11,7 +11,7 @@ pub unsafe fn serial_open() -> c_int {
 }
 
 pub unsafe fn close_port(fd: c_int) {
-    // bindings::close_socket(fd);
+    bindings::close_socket(fd);
 }
 
 pub unsafe fn read(socket: c_int, len: i32, bytes: *mut u8) -> c_int {

@@ -1,0 +1,4 @@
+"filename", "language", "Rust", "comment", "blank", "total"
+"/home/tomas/Projects/Rust/RobotProject/build.rs", "Rust", -29, 29, 0, 0
+"/home/tomas/Projects/Rust/RobotProject/src/cbinding/bindings.rs", "Rust", -2498, -1, -2, -2501
+"Total", "-", -2527, 28, -2, -2501

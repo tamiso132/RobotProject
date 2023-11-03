@@ -1,0 +1,54 @@
+Date : 2023-11-03 16:52:56
+Directory : /home/tomas/Projects/Rust/RobotProject
+Total : 16 files,  1140 codes, 155 comments, 253 blanks, all 1548 lines
+
+Languages
++--------------+------------+------------+------------+------------+------------+
+| language     | files      | code       | comment    | blank      | total      |
++--------------+------------+------------+------------+------------+------------+
+| C            |          7 |        398 |         56 |         99 |        553 |
+| TOML         |          2 |        397 |          3 |         60 |        460 |
+| Rust         |          5 |        341 |         96 |         94 |        531 |
+| C++          |          1 |          3 |          0 |          0 |          3 |
+| Shell Script |          1 |          1 |          0 |          0 |          1 |
++--------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                             | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                |         16 |      1,140 |        155 |        253 |      1,548 |
+| . (Files)                                                        |          4 |        398 |         32 |         67 |        497 |
+| dobot                                                            |          8 |        401 |         56 |         99 |        556 |
+| dobot (Files)                                                    |          1 |          3 |          0 |          0 |          3 |
+| dobot/device                                                     |          4 |        315 |         47 |         74 |        436 |
+| dobot/include                                                    |          2 |         40 |          9 |         20 |         69 |
+| dobot/utility                                                    |          1 |         43 |          0 |          5 |         48 |
+| src                                                              |          4 |        341 |         67 |         87 |        495 |
+| src (Files)                                                      |          2 |         19 |         12 |          8 |         39 |
+| src/cbinding                                                     |          1 |         18 |          1 |          4 |         23 |
+| src/protocol                                                     |          1 |        304 |         54 |         75 |        433 |
++------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------+--------------+------------+------------+------------+------------+
+| filename                                                         | language     | code       | comment    | blank      | total      |
++------------------------------------------------------------------+--------------+------------+------------+------------+------------+
+| /home/tomas/Projects/Rust/RobotProject/Cargo.lock                | TOML         |        384 |          2 |         53 |        439 |
+| /home/tomas/Projects/Rust/RobotProject/Cargo.toml                | TOML         |         13 |          1 |          7 |         21 |
+| /home/tomas/Projects/Rust/RobotProject/bind.sh                   | Shell Script |          1 |          0 |          0 |          1 |
+| /home/tomas/Projects/Rust/RobotProject/build.rs                  | Rust         |          0 |         29 |          7 |         36 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/bluegen.h           | C++          |          3 |          0 |          0 |          3 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/device/b_device.c   | C            |         70 |          0 |         19 |         89 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/device/device.c     | C            |         46 |          0 |          8 |         54 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/device/u_device.c   | C            |        103 |         14 |         20 |        137 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/device/u_s_device.c | C            |         96 |         33 |         27 |        156 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/include/device.h    | C            |         24 |          9 |         16 |         49 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/include/utility.h   | C            |         16 |          0 |          4 |         20 |
+| /home/tomas/Projects/Rust/RobotProject/dobot/utility/utility.c   | C            |         43 |          0 |          5 |         48 |
+| /home/tomas/Projects/Rust/RobotProject/src/cbinding/mod.rs       | Rust         |         18 |          1 |          4 |         23 |
+| /home/tomas/Projects/Rust/RobotProject/src/lib.rs                | Rust         |          2 |          0 |          1 |          3 |
+| /home/tomas/Projects/Rust/RobotProject/src/main.rs               | Rust         |         17 |         12 |          7 |         36 |
+| /home/tomas/Projects/Rust/RobotProject/src/protocol/mod.rs       | Rust         |        304 |         54 |         75 |        433 |
+| Total                                                            |              |      1,140 |        155 |        253 |      1,548 |
++------------------------------------------------------------------+--------------+------------+------------+------------+------------+

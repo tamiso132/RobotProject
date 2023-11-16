@@ -7,7 +7,7 @@ use std::{
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
-    protocol::{self, queue, FloatCustom, IntCustom},
+    protocol::{self, queue, FloatCustom, IntCustom, sensor, SuctionCup},
 };
 
 fn main() {
@@ -22,8 +22,29 @@ fn main() {
 
         let fd = cbinding::serial_open();
 
-        let pos = protocol::GetPoseR::send_immediate_command(fd).unwrap();
+        println!("{}", fd);
 
+        SuctionCup::send_immediate_command(fd, &0, &0);
+         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP1);
+         
+          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP2);
+         
+          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
+         
+          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP5);
+         
+         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
+
+
+
+        
+         loop {
+            sensor::set_infrared_immediate(fd, 1, sensor::Port::GP1);
+              println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
+              thread::sleep(Duration::from_millis(1000));           
+         } 
+
+        
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));
@@ -34,31 +55,31 @@ fn main() {
         // thread::sleep(Duration::from_millis(3000));
         // protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
 
-        queue::StopExec::send_immediate_command(fd);
-        queue::ClearExec::send_immediate_command(fd);
-        let mut last_index = 0;
-        let mut f = FloatCustom::new(0.0);
-        let mut y_add = 10.0;
+        // queue::StopExec::send_immediate_command(fd);
+        // queue::ClearExec::send_immediate_command(fd);
+        // let mut last_index = 0;
+        // let mut f = FloatCustom::new(0.0);
+        // let mut y_add = 10.0;
 
-        for i in 0..5 {
-            y_add += 20.0;
-            last_index = protocol::ptp::Cmd::send_queue_command(
-                fd,
-                &protocol::ptp::PTPMode::MovlXYZ,
-                &FloatCustom::new(175.0),
-                &FloatCustom::new(0.0),
-                &FloatCustom::new(0.0),
-                &pos.r,
-            )
-            .unwrap();
-        }
+        // for i in 0..5 {
+        //     y_add += 20.0;
+        //     last_index = protocol::ptp::Cmd::send_queue_command(
+        //         fd,
+        //         &protocol::ptp::PTPMode::MovlXYZ,
+        //         &FloatCustom::new(175.0),
+        //         &FloatCustom::new(0.0),
+        //         &FloatCustom::new(0.0),
+        //         &pos.r,
+        //     )
+        //     .unwrap();
+        // }
 
-        queue::StartExec::send_immediate_command(fd);
+        // queue::StartExec::send_immediate_command(fd);
 
-        while protocol::queue::CurrentIndex::send_get_command(fd)
-            .unwrap()
-            .current_index
-            >= last_index
-        {}
+        // while protocol::queue::CurrentIndex::send_get_command(fd)
+        //     .unwrap()
+        //     .current_index
+        //     >= last_index
+        // {}
     }
 }

@@ -294,10 +294,11 @@ macro_rules! response2 {
                 s_packet.push(checksum); // AA AA 02 3E 00 F4
 
 
-                 for e in &s_packet{
-                    //println!("{}", e);
-                }
                 //  println!("New Start");
+
+                for e in &s_packet{
+                    println!("{:#02x}", e);
+                }
 
                 unsafe{
                     let bytes_written = write(fd, s_packet);
@@ -307,9 +308,7 @@ macro_rules! response2 {
 
                     println!("bytes read: {}", bytes_read);
 
-                    for i in 0..bytes_read{
-                        println!("{}", &buffer[i as usize]);
-                    }
+                   
                     if queue == 1 && bytes_read != 0{
                         let mut queue_buffer:[u8;8] = [0, 0, 0, 0, 0, 0, 0, 0];
                         queue_buffer.copy_from_slice(&buffer[5..13]);
@@ -392,6 +391,143 @@ pub mod ptp {
     impl From<PTPMode> for u8 {
         fn from(value: PTPMode) -> u8 {
             value as u8
+        }
+    }
+}
+
+pub mod sensor{
+    use crate::cbinding::{read, write, self};
+    use crate::protocol::*;
+    use bincode::config::BigEndian;
+    use serde::{Deserialize, Serialize};
+    use std::ffi::c_float;
+    use std::ffi::c_int;
+    use std::mem::size_of;
+    use std::mem::transmute;
+    use std::u8;
+
+    use super::FloatCustom;
+
+    const ID:u8 = 138;
+    const V2:u8 = 1;
+    const SETLEN:u8 = 5;
+    const GETLEN:u8 = 2;
+
+    response2!(InfraRed, {enable:u8, port:Port, version:u8}, 138);
+
+    #[repr(u8)]
+    #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+    #[serde(into = "u8")]
+    pub enum Port{
+        GP1 = 0,
+        GP2,
+        GP4,
+        GP5,
+    }
+
+    impl From<Port> for u8 {
+        fn from(value: Port) -> u8 {
+            value as u8
+        }
+    }
+
+    #[repr(u8)]
+    #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+    #[serde(into = "u8")]
+    enum Version{
+        V1 = 0,
+        V2 = 1,
+    }
+
+    impl From<Version> for u8 {
+        fn from(value: Version) -> u8 {
+            value as u8
+        }
+    }
+
+    #[repr(u8)]
+    #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+    #[serde(into = "u8")]
+    pub enum State{
+        Empty = 0,
+        Object = 1,
+    }
+
+    impl From<State> for u8 {
+        fn from(value: State) -> u8 {
+            value as u8
+        }
+    }
+
+    impl State {
+        fn into(state:u8) -> State{
+            match state {
+                0 => Self::Empty,
+                1 => Self::Object,
+                x => panic!("invalid state {}", x),
+            }
+        }
+    }
+
+
+    pub fn get_infrared_state(fd:c_int, port:u8) -> u8{
+        let mut header1_list = bincode::serialize(&HEADER).unwrap();
+
+        
+        let mut checksum = ID;
+        checksum = !checksum + 1;
+        
+        let mut send_packet = vec![];
+
+        println!("hello");
+        
+        send_packet.append(&mut header1_list);
+        send_packet.push(2);
+        send_packet.push(ID);
+        send_packet.push(0);
+        send_packet.push(checksum);
+        println!("start");
+     
+
+        unsafe{
+            cbinding::write(fd, send_packet);
+            let mut buffer:[u8;256] = [0;256];
+            let read = cbinding::read(fd, buffer.len() as i32, buffer.as_mut_ptr());
+
+            for i in 0..read{
+                println!("{}", buffer[i as usize]);
+            }
+            return buffer[5];
+        }
+    }
+    pub fn set_infrared_immediate(fd:c_int,enable:u8, port:Port){    
+        let mut header1_list = bincode::serialize(&HEADER).unwrap();
+        let mut len_list = bincode::serialize(&SETLEN).unwrap();
+        let mut id_list = bincode::serialize(&ID).unwrap();
+        let mut ctrl_list = bincode::serialize(&(RW_FLAG)).unwrap();
+
+        let mut checksum:u8 = 0;
+        checksum = checksum.overflowing_add(ID + (RW_FLAG) + enable + port.clone() as u8 + Version::V2 as u8).0;
+        checksum = (!checksum) + 1;
+        
+        let mut send_packet = vec![];
+
+        send_packet.append(&mut header1_list);
+        send_packet.append(&mut len_list);
+        send_packet.append(&mut id_list);
+        send_packet.append(&mut ctrl_list);
+        send_packet.push(enable);
+        send_packet.push(port as u8);
+        send_packet.push(Version::V2 as u8);
+        send_packet.push(checksum);
+
+        for e in &send_packet{
+            println!("{:02x}", e);
+        }
+        unsafe{
+            cbinding::write(fd, send_packet);
+            let mut buffer:[u8;256] = [0;256];
+            cbinding::read(fd, buffer.len() as i32, buffer.as_mut_ptr());
         }
     }
 }

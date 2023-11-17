@@ -474,7 +474,7 @@ pub mod sensor{
         let mut header1_list = bincode::serialize(&HEADER).unwrap();
 
         
-        let mut checksum = ID;
+        let mut checksum = ID + 2;
         checksum = !checksum + 1;
         
         let mut send_packet = vec![];
@@ -482,8 +482,10 @@ pub mod sensor{
         println!("hello");
         
         send_packet.append(&mut header1_list);
-        send_packet.push(2);
+        send_packet.push(4);
         send_packet.push(ID);
+        send_packet.push(0);
+        send_packet.push(2);
         send_packet.push(0);
         send_packet.push(checksum);
         println!("start");

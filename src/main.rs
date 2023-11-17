@@ -1,7 +1,7 @@
 use std::{
     ffi::CString,
     thread::{self, Thread},
-    time::Duration,
+    time::Duration, process::Command,
 };
 
 use robotproject::{
@@ -10,8 +10,13 @@ use robotproject::{
     protocol::{self, queue, FloatCustom, IntCustom, sensor, SuctionCup},
 };
 
+pub fn take_picture(){
+    let output = Command::new("libcamera-still -o test.jpg");
+}
+
 fn main() {
     unsafe {
+
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -20,29 +25,19 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        let fd = cbinding::serial_open();
+        // let fd = cbinding::serial_open();
 
-        println!("{}", fd);
-
-        SuctionCup::send_immediate_command(fd, &0, &0);
-         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP1);
          
-          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP2);
+        // sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
          
-          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
-         
-          sensor::set_infrared_immediate(fd, 1, sensor::Port::GP5);
-         
-         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 
 
 
         
-         loop {
-            sensor::set_infrared_immediate(fd, 1, sensor::Port::GP1);
-              println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
-              thread::sleep(Duration::from_millis(1000));           
-         } 
+        //  loop {
+        //       println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
+        //       thread::sleep(Duration::from_millis(1000));           
+        //  } 
 
         
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);

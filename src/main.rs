@@ -1,16 +1,16 @@
+use colors_transform::Color;
+use image::{DynamicImage, GenericImageView, Pixel, Rgb, RgbImage, Rgba, RgbaImage};
+use robotproject::{
+    self,
+    cbinding::{self, close_port, read, write},
+    protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
+};
 use std::{
     ffi::CString,
     fs,
     process::Command,
     thread::{self, Thread},
     time::Duration,
-};
-
-use image::{Pixel, Rgba, RgbaImage};
-use robotproject::{
-    self,
-    cbinding::{self, close_port, read, write},
-    protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
 };
 
 pub fn take_picture() {
@@ -29,61 +29,47 @@ pub fn take_picture() {
     }
 }
 
-fn rgb_to_hsv(rgb: [u8; 3]) -> [f32; 3] {
-    let r = rgb[0] as f32 / 255.0;
-    let g = rgb[1] as f32 / 255.0;
-    let b = rgb[2] as f32 / 255.0;
+fn check_color(
+    curr_hsl: [f32; 3],
+    hue_range: (u8, u8),
+    sat_range: (u8, u8),
+    light_range: (u8, u8),
+) -> bool {
+    let curr_hue = curr_hsl[0] as u8;
+    let curr_sat = curr_hsl[1] as u8;
+    let curr_light = curr_hsl[2] as u8;
 
-    let cmax = r.max(g).max(b);
-    let cmin = r.min(g).min(b);
-    let delta = cmax - cmin;
+    let is_hue_range = curr_hue >= hue_range.0 && curr_hue <= hue_range.1;
+    let is_sat_range = curr_sat >= sat_range.0 && curr_sat <= sat_range.1;
+    let is_light_range = curr_light >= light_range.0 && curr_light <= light_range.1;
 
-    let hue = if delta == 0.0 {
-        0.0
-    } else if cmax == r {
-        60.0 * (((g - b) / delta) % 6.0)
-    } else if cmax == g {
-        60.0 * (((b - r) / delta) + 2.0)
-    } else {
-        60.0 * (((r - g) / delta) + 4.0)
-    };
-
-    let saturation = if cmax == 0.0 { 0.0 } else { delta / cmax };
-    let value = cmax;
-
-    [hue, saturation, value]
+    is_hue_range && is_light_range && is_sat_range
 }
 
-fn adjust_brightness(pixel: &Rgba<u8>, factor: f32) -> Rgba<u8> {
-    let adjusted_pixel = [
-        (pixel[0] as f32 * factor).min(255.0) as u8,
-        (pixel[1] as f32 * factor).min(255.0) as u8,
-        (pixel[2] as f32 * factor).min(255.0) as u8,
-        pixel[3],
-    ];
+fn rgb_to_hsl(rgb: [u8; 3]) -> [f32; 3] {
+    // let r = rgb[0] as f32 / 255.0;
+    // let g = rgb[1] as f32 / 255.0;
+    // let b = rgb[2] as f32 / 255.0;
 
-    Rgba(adjusted_pixel)
-}
+    // let cmax = r.max(g).max(b);
+    // let cmin = r.min(g).min(b);
+    // let delta = cmax - cmin;
 
-fn replace_dead_pixels(img: &RgbaImage) -> RgbaImage {
-    let mut corrected_img = RgbaImage::new(img.width(), img.height());
+    // let hue = if delta == 0.0 {
+    //     0.0
+    // } else if cmax == r {
+    //     60.0 * (((g - b) / delta) % 6.0)
+    // } else if cmax == g {
+    //     60.0 * (((b - r) / delta) + 2.0)
+    // } else {
+    //     60.0 * (((r - g) / delta) + 4.0)
+    // };
 
-    for y in 0..img.height() {
-        for x in 0..img.width() {
-            let pixel = img.get_pixel(x, y);
+    // let saturation = if cmax == 0.0 { 0.0 } else { delta / cmax };
+    // let value = cmax;
+    let hsl = colors_transform::Rgb::from(rgb[0] as f32, rgb[1] as f32, rgb[2] as f32).to_hsl();
 
-            // Check for dead pixel condition (replace with neighboring pixel)
-            if pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0 {
-                // Replace with the value of the pixel to the left (you can customize this logic)
-                let replacement_pixel = img.get_pixel(x.saturating_sub(1), y);
-                corrected_img.put_pixel(x, y, *replacement_pixel);
-            } else {
-                corrected_img.put_pixel(x, y, *pixel);
-            }
-        }
-    }
-
-    corrected_img
+    [hsl.get_hue(), hsl.get_saturation(), hsl.get_lightness()]
 }
 
 fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: f32) {
@@ -91,48 +77,71 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
     let img = image::open(input_path).expect("Failed to open image");
 
     // Create an output image with the same dimensions
-    let mut output_img = RgbaImage::new(img.width(), img.height());
-
-  let corrected_img = replace_dead_pixels(&img);
+    let mut output_img = RgbImage::new(img.width(), img.height());
 
     // Define the updated HSV range for green
     // Define the updated HSV range for green
-    let yellow_hue_range = (53.0, 60.0); // Adjusted hue range
+    let yellow_hue_range = (35, 66); // Adjusted hue range
 
-    let green_hue_range = (70.0, 140.0); // Adjusted hue range
+    let green_hue_range = (100, 200); // Adjusted hue range
 
-    let saturation_threshold = 0.4;
-    let brightness_threshold = (0.3, 0.6);
+    let saturation_threshold = 50;
+    let brightness_threshold = (20, 70);
 
-    let black = Rgba([255 as u8, 255 as u8, 255 as u8, 255 as u8]);
+    let black = Rgb([0 as u8, 0 as u8, 0 as u8]);
+    let white = Rgb([255 as u8, 255 as u8, 255 as u8]);
     // Iterate through each pixel in the input image
-    for (x, y, pixel) in img.to_rgba8().enumerate_pixels() {
+    for (x, y, pixel) in img.to_rgb8().enumerate_pixels() {
         // Adjust brightness
         // let adjusted_pixel = adjust_brightness(pixel, brightness_factor);
         // Convert RGB to HSV
-        let hsv = rgb_to_hsv([pixel[0], pixel[1], pixel[2]]);
-        if (pixel[1] as f64) < saturation_threshold
-            || (pixel[2] as f64) < brightness_threshold.0
-                && (pixel[2] as f64) > brightness_threshold.1
-        {
-            output_img.put_pixel(x, y, black);
+
+        let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
+
+        let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
+
+        let check_green = check_color(hsl, (90, 160), (30, 100), (0, 70));
+
+        let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
+
+        if check_green {
+            output_img.put_pixel(x, y, *pixel);
             continue;
         }
-        // Check for yellow
-        // if (hsv[0] >= 50.0 && hsv[0] <= 70.0) && hsv[2] > 0.5 {
-        //     output_img.put_pixel(x, y, *pixel);
-        // }
-        if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
+        if check_yellow {
             output_img.put_pixel(x, y, *pixel);
             continue;
         }
 
-        if hsv[0] >= yellow_hue_range.0 && hsv[0] <= yellow_hue_range.1 {
+        if check_blue {
             output_img.put_pixel(x, y, *pixel);
             continue;
         }
+
+        // if too_low_sat || unallowed_brightness {
+        //     output_img.put_pixel(x, y, black);
+        //     continue;
+        // }
+        // println!("Hue {}, satur {},  Brightness {},", hsv[0], hsv[1], hsv[2]);
+        // Check for yellow
+        // if curr_hue >= yellow_hue_range.0 && curr_hue <= yellow_hue_range.1 {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
 
         output_img.put_pixel(x, y, black);
+        // if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
+        //     output_img.put_pixel(x, y, Rgb([124, 254, 0]));
+        //     all_green.push((x, y, Rgb([124, 254, 0])));
+        //     continue;
+        // }
+
+        // if hsv[0] >= yellow_hue_range.0 && hsv[0] <= yellow_hue_range.1 {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
+
+        // output_img.put_pixel(x, y, black);
 
         // } else if (hsv[0] >= 150.0 && hsv[0] <= 210.0) && hsv[2] > 0.5 {
         //     output_img.put_pixel(x, y, adjusted_pixel);
@@ -150,7 +159,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 // 3280x2464 pixels
 fn main() {
     unsafe {
-        take_picture();
+        //  take_picture();
         extract_color_pixels("src/ty.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();

@@ -167,7 +167,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 fn main() {
     unsafe {
         //  take_picture();
-        extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
+       // extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -176,20 +176,22 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        // let fd = cbinding::serial_open();
+        let fd = cbinding::serial_open();
 
-        // sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
+         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 
-        // protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+         protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
 
         // thread::sleep(Duration::from_millis(2000));
-        // protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(10000));
+         protocol::EMotor::send_immediate_command(fd, &1, &1, &IntCustom::new(10000));
         // sensor::get_infrared_state(fd, 0);
-        //  loop {
-        //       println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
-        //       thread::sleep(Duration::from_millis(1000));
-        //  }
+          loop {
+               if sensor::get_infrared_state(fd, 0) == 1 {
+                break;
+               }
+          }
 
+        protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));

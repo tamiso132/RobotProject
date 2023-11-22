@@ -1,26 +1,26 @@
 use std::{
     ffi::CString,
+    process::Command,
     thread::{self, Thread},
-    time::Duration, process::Command,
+    time::Duration,
 };
 
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
-    protocol::{self, queue, FloatCustom, IntCustom, sensor, SuctionCup},
+    protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
 };
 
-pub fn take_picture(){
+pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
-    .arg("-o")
-    .arg("/home/tom/projects/RobotProject/src/ty.jpg")
-    .output()
-    .expect("Failed to execute libcamera-still command");
+        .arg("-o")
+        .arg("/home/tom/projects/RobotProject/src/ty.jpg")
+        .output()
+        .expect("Failed to execute libcamera-still command");
 
-if !output.status.success() {
-    eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-}
-
+    if !output.status.success() {
+        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+    }
 }
 
 fn main() {
@@ -37,17 +37,12 @@ fn main() {
         // let fd = cbinding::serial_open();
 
         // sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
-         
 
-
-
-        
         //  loop {
         //       println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
-        //       thread::sleep(Duration::from_millis(1000));           
-        //  } 
+        //       thread::sleep(Duration::from_millis(1000));
+        //  }
 
-        
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));

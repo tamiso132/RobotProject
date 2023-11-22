@@ -1,16 +1,17 @@
 use std::{
     ffi::CString,
+    process::Command,
     thread::{self, Thread},
-    time::Duration, process::Command,
+    time::Duration,
 };
 
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
-    protocol::{self, queue, FloatCustom, IntCustom, sensor, SuctionCup},
+    protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
 };
 
-pub fn take_picture(){
+pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
     .arg("-o")
     .arg("/home/tom/projects/RobotProject/src/ty.jpg")
@@ -25,7 +26,6 @@ if !output.status.success() {
 
 fn main() {
     unsafe {
-        take_picture();
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -34,20 +34,20 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        // let fd = cbinding::serial_open();
+        let fd = cbinding::serial_open();
 
         // sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
-         
 
+        // protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
 
-
-        
+        // thread::sleep(Duration::from_millis(2000));
+        // protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(10000));
+        sensor::get_infrared_state(fd, 0);
         //  loop {
         //       println!("State: {}", sensor::get_infrared_state(fd, 0) as u8);
-        //       thread::sleep(Duration::from_millis(1000));           
-        //  } 
+        //       thread::sleep(Duration::from_millis(1000));
+        //  }
 
-        
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));
@@ -76,6 +76,26 @@ fn main() {
         //     )
         //     .unwrap();
         // }
+        let mut pos = protocol::GetPoseR::send_immediate_command(fd).unwrap();
+
+        queue::ClearExec::send_immediate_command(fd);
+        queue::StopExec::send_immediate_command(fd);
+
+        protocol::homing::Cmd::send_queue_command(fd, &0);
+        println!("x: {}", &pos.x.to_float());
+         println!("y: {}", &pos.y.to_float());
+          println!("z: {}", &pos.z.to_float());
+        protocol::ptp::Cmd::send_queue_command(
+            fd,
+            &protocol::ptp::PTPMode::MovlXYZ,
+            &FloatCustom::new(100.0),
+            &FloatCustom::new(0.0),
+            &FloatCustom::new(0.0),
+            &pos.r,
+        );
+
+        queue::CurrentIndex::send_immediate_command(fd, current_index)
+        protocol::queue::StartExec::send_immediate_command(fd);
 
         // queue::StartExec::send_immediate_command(fd);
 

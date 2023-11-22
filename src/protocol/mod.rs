@@ -202,6 +202,7 @@ macro_rules! response2 {
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name>();
 
                 for e in &send_packet{
+                    println!("{:#02x}", e)
                 }
 
                 let mut buffer:[u8; 256] = [0; 256];
@@ -489,6 +490,10 @@ pub mod sensor{
         send_packet.push(0);
         send_packet.push(checksum);
         println!("start");
+
+        for e in &send_packet{
+            println!("{:#02x}", e);
+        }
      
 
         unsafe{
@@ -523,9 +528,9 @@ pub mod sensor{
         send_packet.push(Version::V2 as u8);
         send_packet.push(checksum);
 
-        for e in &send_packet{
-            println!("{:02x}", e);
-        }
+        // for e in &send_packet{
+        //     println!("{:02x}", e);
+        // }
         unsafe{
             cbinding::write(fd, send_packet);
             let mut buffer:[u8;256] = [0;256];

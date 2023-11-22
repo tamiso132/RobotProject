@@ -77,7 +77,7 @@ fn rgb_to_hsl(rgb: [u8; 3]) -> [f32; 3] {
 
 fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: f32) {
     // Load the image
-    let mut img = image::open(input_path).expect("Failed to open image");
+    let img = image::open(input_path).expect("Failed to open image");
 
     //img = img.resize(1000, , imageops::FilterType::Nearest);
 
@@ -89,78 +89,119 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     let black = Rgb([0 as u8, 0 as u8, 0 as u8]);
     let white = Rgb([255 as u8, 255 as u8, 255 as u8]);
-    // Iterate through each pixel in the input image
-    for (x, y, pixel) in img.to_rgb8().enumerate_pixels() {
-        // Adjust brightness
-        // let adjusted_pixel = adjust_brightness(pixel, brightness_factor);
-        // Convert RGB to HSV
 
-        let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
+    let width = img.width();
+    let height = img.height();
 
-        let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
+    let start_x = 125;
+    let end_x = img.width() - 100;
 
-        let check_green = check_color(hsl, (90, 160), (30, 100), (0, 70));
+    let start_y = 215;
+    let end_y = 305;
 
-        let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
+    let pixels = img.to_rgb8();
 
-        // let check_red1 = check_color(hsl, (0, 359), (0, 100), (0, 100));
-        let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
+    for y in start_y..end_y {
+        for x in start_x..end_x {
+            let pixel = pixels[(x, y)];
+            let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
+            let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
 
-        // if check_green {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
-        // if check_yellow {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
+            let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
 
-        // if check_red2 {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
+            let check_green = check_color(hsl, (90, 160), (15, 50), (0, 70));
 
-        // if check_blue {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
+            //let check_blue = check_color(hsl, (210, 230), (45, 100), (13, 100));
 
-        // if too_low_sat || unallowed_brightness {
-        //     output_img.put_pixel(x, y, black);
-        //     continue;
-        // }
-        // println!("Hue {}, satur {},  Brightness {},", hsv[0], hsv[1], hsv[2]);
-        // Check for yellow
-        // if curr_hue >= yellow_hue_range.0 && curr_hue <= yellow_hue_range.1 {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
-
-        output_img.put_pixel(x, y, *pixel);
-        if y == 90 {
-            output_img.put_pixel(x, y, white)
+            if check_blue {
+                output_img.put_pixel(x, y, pixel);
+            }
         }
-        // if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
-        //     output_img.put_pixel(x, y, Rgb([124, 254, 0]));
-        //     all_green.push((x, y, Rgb([124, 254, 0])));
-        //     continue;
-        // }
-
-        // if hsv[0] >= yellow_hue_range.0 && hsv[0] <= yellow_hue_range.1 {
-        //     output_img.put_pixel(x, y, *pixel);
-        //     continue;
-        // }
-
-        // output_img.put_pixel(x, y, black);
-
-        // } else if (hsv[0] >= 150.0 && hsv[0] <= 210.0) && hsv[2] > 0.5 {
-        //     output_img.put_pixel(x, y, adjusted_pixel);
-        // } else if ((hsv[0] >= -30.0 && hsv[0] <= 30.0) || (hsv[0] >= 150.0 && hsv[0] <= 180.0))
-        //     && hsv[2] > 0.5
-        // {
-        //     output_img.put_pixel(x, y, adjusted_pixel);
-        // }
     }
+    // Iterate through each pixel in the input image
+    // for (x, y, pixel) in img.to_rgb8().enumerate_pixels()[0] {
+    //     // Adjust brightness
+    //     // let adjusted_pixel = adjust_brightness(pixel, brightness_factor);
+    //     // Convert RGB to HSV
+
+    //     let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
+
+    //     let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
+
+    //     let check_green = check_color(hsl, (90, 160), (30, 100), (0, 70));
+
+    //     let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
+
+    //     // let check_red1 = check_color(hsl, (0, 359), (0, 100), (0, 100));
+    //     let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
+
+    //     // if check_green {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+    //     // if check_yellow {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+
+    //     // if check_red2 {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+
+    //     // if check_blue {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+
+    //     // if too_low_sat || unallowed_brightness {
+    //     //     output_img.put_pixel(x, y, black);
+    //     //     continue;
+    //     // }
+    //     // println!("Hue {}, satur {},  Brightness {},", hsv[0], hsv[1], hsv[2]);
+    //     // Check for yellow
+    //     // if curr_hue >= yellow_hue_range.0 && curr_hue <= yellow_hue_range.1 {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+
+    //     output_img.put_pixel(x, y, *pixel);
+    //     if y == 215 {
+    //         output_img.put_pixel(x, y, white)
+    //     }
+
+    //     if y == 305 {
+    //         output_img.put_pixel(x, y, white)
+    //     }
+
+    //     if x == 125 {
+    //         output_img.put_pixel(x, y, white);
+    //     }
+
+    //     if x == img.width() - 100 {
+    //         output_img.put_pixel(x, y, white);
+    //     }
+    //     // if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
+    //     //     output_img.put_pixel(x, y, Rgb([124, 254, 0]));
+    //     //     all_green.push((x, y, Rgb([124, 254, 0])));
+    //     //     continue;
+    //     // }
+
+    //     // if hsv[0] >= yellow_hue_range.0 && hsv[0] <= yellow_hue_range.1 {
+    //     //     output_img.put_pixel(x, y, *pixel);
+    //     //     continue;
+    //     // }
+
+    //     // output_img.put_pixel(x, y, black);
+
+    //     // } else if (hsv[0] >= 150.0 && hsv[0] <= 210.0) && hsv[2] > 0.5 {
+    //     //     output_img.put_pixel(x, y, adjusted_pixel);
+    //     // } else if ((hsv[0] >= -30.0 && hsv[0] <= 30.0) || (hsv[0] >= 150.0 && hsv[0] <= 180.0))
+    //     //     && hsv[2] > 0.5
+    //     // {
+    //     //     output_img.put_pixel(x, y, adjusted_pixel);
+    //     // }
+    // }
 
     // Save the output image
     output_img.save(output_path).expect("Failed to save image");
@@ -170,7 +211,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 fn main() {
     unsafe {
         //  take_picture();
-       // extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
+        extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -179,22 +220,22 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        let fd = cbinding::serial_open();
+        // let fd = cbinding::serial_open();
 
-         sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
+        //  sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 
-         protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+        //  protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
 
-        // thread::sleep(Duration::from_millis(2000));
-         protocol::EMotor::send_immediate_command(fd, &1, &1, &IntCustom::new(10000));
-        // sensor::get_infrared_state(fd, 0);
-          loop {
-               if sensor::get_infrared_state(fd, 0) == 1 {
-                break;
-               }
-          }
+        // // thread::sleep(Duration::from_millis(2000));
+        //  protocol::EMotor::send_immediate_command(fd, &1, &1, &IntCustom::new(10000));
+        // // sensor::get_infrared_state(fd, 0);
+        //   loop {
+        //        if sensor::get_infrared_state(fd, 0) == 1 {
+        //         break;
+        //        }
+        //   }
 
-        protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+        // protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));

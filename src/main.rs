@@ -13,6 +13,13 @@ use std::{
     time::Duration,
 };
 
+type XStart = u32;
+type Width = u32;
+
+struct Rectangle {
+    lines: Vec<Option<(XStart, Width)>>,
+}
+
 pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
         .arg("-o")
@@ -101,20 +108,50 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     let pixels = img.to_rgb8();
 
+    let mut red_rectangle = Rectangle { lines: vec![] };
+    let mut red_started = false;
+    let mut curr_y = start_y - 1;
     for y in start_y..end_y {
         for x in start_x..end_x {
             let pixel = pixels[(x, y)];
             let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
-            let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
 
-            let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
+            let check_yellow = check_color(hsl, (30, 70), (20, 100), (0, 80));
 
-            let check_green = check_color(hsl, (90, 160), (15, 50), (0, 70));
+            let check_green = check_color(hsl, (90, 160), (30, 50), (0, 70));
 
-            //let check_blue = check_color(hsl, (210, 230), (45, 100), (13, 100));
+            let check_blue = check_color(hsl, (210, 230), (45, 100), (13, 100));
 
-            if check_blue {
+            let check_red = check_color(hsl, (330, 359), (20, 100), (0, 50));
+
+            if check_red {
                 output_img.put_pixel(x, y, pixel);
+
+                let diff = curr_y - y;
+                if diff > 0 {
+                    red_rectangle.lines.push((x, 0));
+
+                    for i in 1..diff {
+                        red_rectangle.lines.push(None)
+                    }
+                    red_rectangle.lines.push(None);
+                    curr_y = y;
+                    continue;
+                }
+
+                red_rectangle.lines[diff]
+
+                // //  println!("y pos: {},  y start {}", y, red_rectangle.y);
+
+                // if red_rectangle.height + 1 == y - red_rectangle.y {
+                //     println!("Height increase");
+                //     red_rectangle.height += 1;
+                //     output_img.put_pixel(x, y, pixel);
+                // } else if y == red_rectangle.y && red_rectangle.width + 1 == x - red_rectangle.x {
+                //     println!("Width increase");
+                //     output_img.put_pixel(x, y, pixel);
+                //     red_rectangle.width += 1;
+                // }
             }
         }
     }

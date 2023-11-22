@@ -1,5 +1,5 @@
 use colors_transform::Color;
-use image::{DynamicImage, GenericImageView, Pixel, Rgb, RgbImage, Rgba, RgbaImage};
+use image::{imageops, DynamicImage, GenericImageView, Pixel, Rgb, RgbImage, Rgba, RgbaImage};
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
@@ -77,19 +77,15 @@ fn rgb_to_hsl(rgb: [u8; 3]) -> [f32; 3] {
 
 fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: f32) {
     // Load the image
-    let img = image::open(input_path).expect("Failed to open image");
+    let mut img = image::open(input_path).expect("Failed to open image");
+
+    img = img.resize(500, 500, imageops::FilterType::CatmullRom);
 
     // Create an output image with the same dimensions
     let mut output_img = RgbImage::new(img.width(), img.height());
 
     // Define the updated HSV range for green
     // Define the updated HSV range for green
-    let yellow_hue_range = (35, 66); // Adjusted hue range
-
-    let green_hue_range = (100, 200); // Adjusted hue range
-
-    let saturation_threshold = 50;
-    let brightness_threshold = (20, 70);
 
     let black = Rgb([0 as u8, 0 as u8, 0 as u8]);
     let white = Rgb([255 as u8, 255 as u8, 255 as u8]);
@@ -107,11 +103,19 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
         let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
 
+        let check_red1 = check_color(hsl, (0, 15), (40, 100), (0, 100));
+        let check_red2 = check_color(hsl, (230, 255), (40, 100), (0, 70));
+
         if check_green {
             output_img.put_pixel(x, y, *pixel);
             continue;
         }
         if check_yellow {
+            output_img.put_pixel(x, y, *pixel);
+            continue;
+        }
+
+        if check_red1 || check_red2 {
             output_img.put_pixel(x, y, *pixel);
             continue;
         }

@@ -11,12 +11,21 @@ use robotproject::{
 };
 
 pub fn take_picture(){
-    let output = Command::new("libcamera-still -o test.jpg");
+    let output = Command::new("libcamera-jpeg")
+    .arg("-o")
+    .arg("/home/tom/projects/RobotProject/src/ty.jpg")
+    .output()
+    .expect("Failed to execute libcamera-still command");
+
+if !output.status.success() {
+    eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+}
+
 }
 
 fn main() {
     unsafe {
-
+        take_picture();
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -27,7 +36,6 @@ fn main() {
 
         // let fd = cbinding::serial_open();
 
-         
         // sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
          
 

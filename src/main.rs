@@ -34,11 +34,11 @@ pub fn take_picture() {
 
 fn check_color(
     curr_hsl: [f32; 3],
-    hue_range: (u8, u8),
+    hue_range: (u16, u16),
     sat_range: (u8, u8),
     light_range: (u8, u8),
 ) -> bool {
-    let curr_hue = curr_hsl[0] as u8;
+    let curr_hue = curr_hsl[0] as u16;
     let curr_sat = curr_hsl[1] as u8;
     let curr_light = curr_hsl[2] as u8;
 
@@ -79,7 +79,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
     // Load the image
     let mut img = image::open(input_path).expect("Failed to open image");
 
-    img = img.resize(1000, 1000, imageops::FilterType::Nearest);
+    //img = img.resize(1000, , imageops::FilterType::Nearest);
 
     // Create an output image with the same dimensions
     let mut output_img = RgbImage::new(img.width(), img.height());
@@ -103,27 +103,27 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
         let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
 
-        let check_red1 = check_color(hsl, (0, 15), (40, 100), (0, 100));
-        let check_red2 = check_color(hsl, (230, 255), (40, 100), (0, 70));
+        // let check_red1 = check_color(hsl, (0, 359), (0, 100), (0, 100));
+        let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
 
-        if check_green {
-            output_img.put_pixel(x, y, *pixel);
-            continue;
-        }
-        if check_yellow {
-            output_img.put_pixel(x, y, *pixel);
-            continue;
-        }
+        // if check_green {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
+        // if check_yellow {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
 
-        if check_red1 || check_red2 {
-            output_img.put_pixel(x, y, *pixel);
-            continue;
-        }
+        // if check_red2 {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
 
-        if check_blue {
-            output_img.put_pixel(x, y, *pixel);
-            continue;
-        }
+        // if check_blue {
+        //     output_img.put_pixel(x, y, *pixel);
+        //     continue;
+        // }
 
         // if too_low_sat || unallowed_brightness {
         //     output_img.put_pixel(x, y, black);
@@ -136,7 +136,10 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
         //     continue;
         // }
 
-        output_img.put_pixel(x, y, black);
+        output_img.put_pixel(x, y, *pixel);
+        if y == 90 {
+            output_img.put_pixel(x, y, white)
+        }
         // if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
         //     output_img.put_pixel(x, y, Rgb([124, 254, 0]));
         //     all_green.push((x, y, Rgb([124, 254, 0])));

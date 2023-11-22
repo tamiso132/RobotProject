@@ -2,9 +2,7 @@ use std::{
     ffi::CString,
     fs,
     process::Command,
-    process::Command,
     thread::{self, Thread},
-    time::Duration,
     time::Duration,
 };
 
@@ -13,21 +11,18 @@ use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
     protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
-    protocol::{self, queue, sensor, FloatCustom, IntCustom, SuctionCup},
 };
 
 pub fn take_picture() {
-pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
-            .arg("-o")
-            .arg("/home/tom/projects/RobotProject/src/ty.jpg")
-            .output()
-            .expect("Failed to execute libcamera-still command");
+        .arg("-o")
+        .arg("/home/tom/projects/RobotProject/src/ty.jpg")
+        .output()
+        .expect("Failed to execute libcamera-still command");
 
     if !output.status.success() {
         eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
     }
-}
 
     if !output.status.success() {
         eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
@@ -70,12 +65,35 @@ fn adjust_brightness(pixel: &Rgba<u8>, factor: f32) -> Rgba<u8> {
     Rgba(adjusted_pixel)
 }
 
+fn replace_dead_pixels(img: &RgbaImage) -> RgbaImage {
+    let mut corrected_img = RgbaImage::new(img.width(), img.height());
+
+    for y in 0..img.height() {
+        for x in 0..img.width() {
+            let pixel = img.get_pixel(x, y);
+
+            // Check for dead pixel condition (replace with neighboring pixel)
+            if pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0 {
+                // Replace with the value of the pixel to the left (you can customize this logic)
+                let replacement_pixel = img.get_pixel(x.saturating_sub(1), y);
+                corrected_img.put_pixel(x, y, *replacement_pixel);
+            } else {
+                corrected_img.put_pixel(x, y, *pixel);
+            }
+        }
+    }
+
+    corrected_img
+}
+
 fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: f32) {
     // Load the image
     let img = image::open(input_path).expect("Failed to open image");
 
     // Create an output image with the same dimensions
     let mut output_img = RgbaImage::new(img.width(), img.height());
+
+  let corrected_img = replace_dead_pixels(&img);
 
     // Define the updated HSV range for green
     // Define the updated HSV range for green
@@ -132,6 +150,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 // 3280x2464 pixels
 fn main() {
     unsafe {
+        take_picture();
         extract_color_pixels("src/ty.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();

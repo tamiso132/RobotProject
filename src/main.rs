@@ -17,6 +17,9 @@ pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
         .arg("-o")
         .arg("/home/tom/projects/RobotProject/src/ty.jpg")
+        .arg("--width 450")
+        .arg("--height 150")
+        .arg("--brightness 0.3")
         .output()
         .expect("Failed to execute libcamera-still command");
 

@@ -79,7 +79,7 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
     // Load the image
     let mut img = image::open(input_path).expect("Failed to open image");
 
-    img = img.resize(500, 500, imageops::FilterType::CatmullRom);
+    img = img.resize(1000, 1000, imageops::FilterType::Nearest);
 
     // Create an output image with the same dimensions
     let mut output_img = RgbImage::new(img.width(), img.height());

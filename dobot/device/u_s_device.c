@@ -2,14 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <signal.h>
 
 // Linux headers
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>   // Contains file controls like O_RDWR
 #include <errno.h>   // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
@@ -109,13 +108,12 @@ int configure_serial(int fd)
 
     // options.c_cflag &= ~CRTSCTS;                // turn off hardware flow control
     // options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
-    options.c_cflag |= CLOCAL;
 
     options.c_lflag &= ~ICANON;
     options.c_lflag &= ~ISIG;
-    options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); // Disable any special handling of received bytes
-    options.c_oflag &= ~OPOST;                                                       // Prevent special interpretation of output bytes (e.g. newline chars)
-    options.c_oflag &= ~ONLCR;                                                       // Prevent conversion of newline to carriage return/line feed
+    options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
+    options.c_oflag &= ~OPOST;
+    options.c_oflag &= ~ONLCR;
 
     options.c_oflag = 0;
     options.c_lflag = 0;
@@ -124,32 +122,5 @@ int configure_serial(int fd)
     tcflush(fd, TCOFLUSH);
     tcsetattr(fd, TCSANOW, &options);
 
-    // serialConfig.c_cflag &= ~CSIZE;  // Clear the data bits field
-    // serialConfig.c_cflag |= CS8;     // Set 8 data bits
-    // serialConfig.c_cflag &= ~PARENB; // No parity
-    // serialConfig.c_iflag &= ~(INPCK | PARMRK | ISTRIP);
-    // serialConfig.c_cflag &= ~CSTOPB; // 1 stop bit
-
-    // serialConfig.c_cflag |= CREAD | CLOCAL;
-    // serialConfig.c_cc[VMIN] = 0;
-    // serialConfig.c_cc[VTIME] = 10;
-
-    // serialConfig.c_cflag &= ~CRTSCTS;                // turn off flow control hw
-    // serialConfig.c_cflag &= ~(IXON | IXOFF | IXANY); // turn off flow control sw
-    // serialConfig.c_lflag &= ~ICANON;                 // Disable canonical mode
-    // serialConfig.c_lflag &= ~ISIG;                   // Disable signal generation
-    // serialConfig.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
-    // serialConfig.c_iflag &= ~OPOST; // prevent special interpretation
-    // serialConfig.c_iflag &= ~ONLCR; // prevent conversion of newline
-
-    // Apply the new settings
-    // tcflush(fd, TCIFLUSH);
-    // if (tcsetattr(fd, TCSANOW, &options) != 0)
-    // {
-    //     perror("Error setting serial port attributes\n");
-    //     close(fd);
-    //     exit(-1);
-    //     return 1;
-    // }
     printf("Configuration done of serial\n");
 }

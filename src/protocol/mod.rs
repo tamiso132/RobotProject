@@ -1,10 +1,6 @@
 use crate::cbinding::{read, write};
-use bincode::config::BigEndian;
 use serde::{Deserialize, Serialize};
-use std::ffi::c_float;
 use std::ffi::c_int;
-use std::mem::size_of;
-use std::mem::transmute;
 pub const HEADER: u16 = 0xAA | 0xAA << 8;
 pub const QUEUE_FLAG: u8 = 1 << 1;
 pub const RW_FLAG: u8 = 1 << 0;

@@ -110,7 +110,6 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     let mut red_rectangle = Rectangle { lines: vec![] };
     let mut red_started = false;
-    let mut curr_y = start_y - 1;
     for y in start_y..end_y {
         for x in start_x..end_x {
             let pixel = pixels[(x, y)];
@@ -126,20 +125,6 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
             if check_red {
                 output_img.put_pixel(x, y, pixel);
-
-                let diff = curr_y - y;
-                if diff > 0 {
-                    red_rectangle.lines.push((x, 0));
-
-                    for i in 1..diff {
-                        red_rectangle.lines.push(None)
-                    }
-                    red_rectangle.lines.push(None);
-                    curr_y = y;
-                    continue;
-                }
-
-                red_rectangle.lines[diff]
 
                 // //  println!("y pos: {},  y start {}", y, red_rectangle.y);
 

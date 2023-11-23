@@ -14,10 +14,11 @@ use std::{
 };
 
 type XStart = u32;
+type YStart = u32;
 type Width = u32;
 
-struct Rectangle {
-    lines: Vec<Option<(XStart, Width)>>,
+pub struct Line {
+    pub line: (YStart, Width),
 }
 
 pub fn take_picture() {
@@ -108,8 +109,6 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     let pixels = img.to_rgb8();
 
-    let mut red_rectangle = Rectangle { lines: vec![] };
-    let mut red_started = false;
     for y in start_y..end_y {
         for x in start_x..end_x {
             let pixel = pixels[(x, y)];
@@ -124,22 +123,68 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
             let check_red = check_color(hsl, (330, 359), (20, 100), (0, 50));
 
             if check_red {
+                let mut w = 0;
+                let mut h = 0;
                 output_img.put_pixel(x, y, pixel);
 
-                // //  println!("y pos: {},  y start {}", y, red_rectangle.y);
+                let mut curr_width_forward = 0;
+                let mut curr_width_backward = 0;
+                let mut curr_height = 0;
 
-                // if red_rectangle.height + 1 == y - red_rectangle.y {
-                //     println!("Height increase");
-                //     red_rectangle.height += 1;
-                //     output_img.put_pixel(x, y, pixel);
-                // } else if y == red_rectangle.y && red_rectangle.width + 1 == x - red_rectangle.x {
-                //     println!("Width increase");
-                //     output_img.put_pixel(x, y, pixel);
-                //     red_rectangle.width += 1;
-                // }
+                let mut big_f = 0;
+                let mut big_b = 0;
+                let mut big_h = 0;
+
+                let mut y_test = y;
+
+                loop {
+                    let pixel_forward = pixels[(curr_width_forward + 1 + x, y_test)];
+                    let pixel_back = pixels[(x - curr_width_backward - 1, y_test)];
+
+                    let high = pixels[(curr_width_forward + x, y_test)];
+
+                    let hsl_forward =
+                        rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
+                    let hsl_backward = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
+
+                    let check_red_f = check_color(hsl_forward, (330, 359), (20, 100), (0, 50));
+                    let check_red_b = check_color(hsl_backward, (330, 359), (20, 100), (0, 50));
+
+                    if check_red_f {
+                        curr_width_forward += 1;
+                    }
+                    if check_red_b {
+                        curr_width_backward += 1;
+                    }
+                    if !check_red_f && !check_red_b {
+                        y_test += 1;
+                        let pixel_now = pixels[(x, y_test)];
+                        let hsl_yep = rgb_to_hsl([pixel_now[0], pixel_now[1], pixel_now[2]]);
+                        let move_down = check_color(hsl_yep, (330, 359), (20, 100), (0, 50));
+                        if curr_width_forward > big_f {
+                            big_f = curr_width_forward;
+                        }
+
+                        if curr_width_backward > big_b {
+                            big_b = curr_width_forward;
+                        }
+
+                        curr_width_backward = 0;
+                        curr_width_forward = 0;
+
+                        if move_down {
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                println!("forward: {}, backward: {}", big_f, big_b);
+                panic!();
             }
         }
+
     }
+
     // Iterate through each pixel in the input image
     // for (x, y, pixel) in img.to_rgb8().enumerate_pixels()[0] {
     //     // Adjust brightness

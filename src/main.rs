@@ -528,7 +528,7 @@ pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
 fn main() {
     unsafe {
         //  take_picture();
-         extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
+        // extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -537,31 +537,54 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-     //   let fd = cbinding::serial_open();
+        let fd = cbinding::serial_open();
 
 //        move_to_pos_in_grid(fd, 3, 4);
-
+    queue::StopExec::send_immediate_command(fd);
+    queue::ClearExec::send_immediate_command(fd);
         
-        // homing::Param::send_immediate_command(
+        // homing::Param::send_queue_command(
         //     fd,
-        //     &FloatCustom::new(100.0),
+        //     &FloatCustom::new(220.0),
         //     &FloatCustom::new(0.0),
         //     &FloatCustom::new(0.0),
         //     &FloatCustom::new(0.0),
         // );
-        // let pos = GetPoseR::send_immediate_command(fd).unwrap();
-        // let x = pos.x.to_float();
-        // let y = pos.y.to_float();
+        // homing::Cmd::send_queue_command(fd, &0);
 
-        // // for e in &pos.y.hex_float {
-        // //     println!("hex: Y: {:#02x}", e);
-        // // }
-        // //  homing::Cmd::send_immediate_command(fd, &0);
+
+
+        let pos = GetPoseR::send_immediate_command(fd).unwrap();
+        let x = pos.x.to_float();
+        let y = pos.y.to_float();
+        let z = pos.z.to_float();
+        let r = pos.r.to_float();
+
+         println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
+
+        // // // // for e in &pos.y.hex_float {
+        // // // //     println!("hex: Y: {:#02x}", e);
+        // // // // }
+    //     thread::sleep(Duration::from_millis(2000));
+    //    // let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(100.0), &FloatCustom::new(-170.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
+    //     let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(25.0), &FloatCustom::new(-200.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
+    //      queue::StartExec::send_immediate_command(fd);
         // println!("({},{},{}, {})", x, y, pos.z.to_float(), pos.r.to_float());
         // // 120, -85, -30, 0, first row
         // //x, 120 -> 215
         // //y, -85-> -125,
 
+        // X: -2.811592, Y: -96.57364, Z: 22.366066, R: -80.37781
+        //X: -5.6657414, Y: -170.26752, Z: 23.920258, R: -91.90584
+           // thread::sleep(Duration::from_millis(2000));
+//    ptp::Cmd::send_immediate_command(
+//             fd,
+//             &ptp::PTPMode::MovlXYZ,
+//             &FloatCustom::new(-20.9770539),
+//             &FloatCustom::new(-89.46677),
+//             &FloatCustom::new(20.076248),
+//             &FloatCustom::new(-91.90584),
+//         );
         // // let new_x = 120.0 + (((215.0 - 120.0) / 4.0) * 1.0);
         // // let new_y = -85.0 + (((-125.0 + 85.0) / 4.0) * 1.0);
         // // homing::Cmd::send_immediate_command(fd, &0);
@@ -656,6 +679,6 @@ fn main() {
         //     .current_index
         //     >= last_index
         // {}
-       // cbinding::close_port(fd);
+        cbinding::close_port(fd);
     }
 }

@@ -415,7 +415,7 @@ fn get_object(
 fn main() {
     unsafe {
         //  take_picture();
-        extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
+        // extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -424,7 +424,9 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        // let fd = cbinding::serial_open();
+        let fd = cbinding::serial_open();
+
+        protocol::homing::Cmd::send_immediate_command(fd, &0);
 
         //  sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 

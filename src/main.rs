@@ -1,5 +1,7 @@
 use colors_transform::Color;
-use image::{imageops, DynamicImage, GenericImageView, Pixel, Rgb, RgbImage, Rgba, RgbaImage};
+use image::{
+    imageops, math::Rect, DynamicImage, GenericImageView, Pixel, Rgb, RgbImage, Rgba, RgbaImage,
+};
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
@@ -17,8 +19,28 @@ type XStart = u32;
 type YStart = u32;
 type Width = u32;
 
-pub struct Line {
-    pub line: (YStart, Width),
+pub struct Rectangle {
+    pub x_pos: u32,
+    pub y_pos: u32,
+    pub width: u32,
+    pub height: u32,
+    pub color: Colory,
+}
+
+impl Rectangle {
+    fn in_bound(&self, x: u32, y: u32, threshold: u32) -> bool {
+        let is_x = x + threshold >= self.x_pos && x - threshold <= self.x_pos + self.width;
+        let is_y = y + threshold >= self.y_pos && y - threshold <= self.y_pos + self.height;
+
+        is_x && is_y
+    }
+    fn print_to_screen(&self, image: &mut RgbImage, rgb: Rgb<u8>) {
+        for x in self.x_pos..self.width + self.x_pos {
+            for y in self.y_pos..self.height + self.y_pos {
+                image.put_pixel(x, y, Rgb([255, 255, 255]));
+            }
+        }
+    }
 }
 
 pub fn take_picture() {
@@ -40,7 +62,7 @@ pub fn take_picture() {
     }
 }
 
-fn check_color(
+fn is_color_equal(
     curr_hsl: [f32; 3],
     hue_range: (u16, u16),
     sat_range: (u8, u8),
@@ -109,89 +131,114 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     let pixels = img.to_rgb8();
 
+    let mut rectangles: Vec<Rectangle> = vec![];
+
     for y in start_y..end_y {
         for x in start_x..end_x {
+            let mut in_bound = false;
+            for r in &rectangles {
+                if r.in_bound(x, y, 20) {
+                    in_bound = true;
+                    break;
+                }
+            }
+
+            if in_bound == true {
+                continue;
+            }
+
             let pixel = pixels[(x, y)];
             let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
 
-            let check_yellow = check_color(hsl, (30, 70), (20, 100), (0, 80));
+            let check_yellow = is_color_equal(hsl, (30, 70), (20, 100), (0, 80));
 
-            let check_green = check_color(hsl, (90, 160), (30, 50), (0, 70));
+            let check_green = is_color_equal(hsl, (90, 160), (30, 50), (0, 70));
 
-            let check_blue = check_color(hsl, (210, 230), (45, 100), (13, 100));
+            let check_blue = is_color_equal(hsl, (210, 230), (45, 100), (13, 100));
 
-            let check_red = check_color(hsl, (330, 359), (20, 100), (0, 50));
+            let check_red = is_color_equal(hsl, (330, 359), (20, 100), (0, 50));
 
             if check_red {
-                let mut w = 0;
-                let mut h = 0;
-                output_img.put_pixel(x, y, pixel);
-
-                let mut curr_width_forward = 0;
-                let mut curr_width_backward = 0;
-                let mut curr_height = 0;
-
-                let mut big_f = 0;
-                let mut big_b = 0;
-                let mut big_h = 0;
-
-                let mut y_test = y;
-
-                loop {
-                    let pixel_forward = pixels[(curr_width_forward + 1 + x, y_test)];
-                    let pixel_back = pixels[(x - curr_width_backward - 1, y_test)];
-
-                    let high = pixels[(curr_width_forward + x, y_test)];
-
-                    let hsl_forward =
-                        rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
-                    let hsl_backward = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
-
-                    let check_red_f = check_color(hsl_forward, (330, 359), (20, 100), (0, 50));
-                    let check_red_b = check_color(hsl_backward, (330, 359), (20, 100), (0, 50));
-
-                    if check_red_f {
-                        curr_width_forward += 1;
-                    }
-                    if check_red_b {
-                        curr_width_backward += 1;
-                    }
-                    if !check_red_f && !check_red_b {
-                        y_test += 1;
-                        let pixel_now = pixels[(x, y_test)];
-                        let hsl_yep = rgb_to_hsl([pixel_now[0], pixel_now[1], pixel_now[2]]);
-                        let move_down = check_color(hsl_yep, (330, 359), (20, 100), (0, 50));
-                        if curr_width_forward > big_f {
-                            big_f = curr_width_forward;
-                        }
-
-                        if curr_width_backward > big_b {
-                            big_b = curr_width_forward;
-                        }
-
-                        curr_width_backward = 0;
-                        curr_width_forward = 0;
-
-                        if move_down {
-                        } else {
-                            break;
-                        }
-                    }
+                // output_img.put_pixel(x, y, pixel);
+                let rectangle = get_object(&pixels, x, y, Colory::Red, &mut output_img);
+                if rectangle.is_some() {
+                    println!("{},{}", x, y);
+                    rectangles.push(rectangle.unwrap());
+                    continue;
                 }
-                println!("forward: {}, backward: {}", big_f, big_b);
-                panic!();
             }
+            // } else if check_blue {
+            //     let rectangle = get_object(&pixels, x, y, Colory::Blue);
+            //     // if rectangle.is_some() {
+            //     //     rectangles.push(rectangle.unwrap());
+            //     // }
+            // }
+            if check_yellow {
+                //  output_img.put_pixel(x, y, pixel);
+                let rectangle = get_object(&pixels, x, y, Colory::Yellow, &mut output_img);
+                if rectangle.is_some() {
+                    rectangles.push(rectangle.unwrap());
+                    continue;
+                }
+                //  output_img.put_pixel(x, y, Rgb([255, 0, 0]));
+            }
+            // } else if check_blue {
+            //     // let rectangle = get_object(&pixels, x, y, Colory::Blue);
+            //     // if rectangle.is_some() {
+            //     //     rectangles.push(rectangle.unwrap());
+            //     // }
+            // } else if check_green {
+            //     // let rectangle = get_object(&pixels, x, y, Colory::Green);
+            //     // if rectangle.is_some() {
+            //     //     rectangles.push(rectangle.unwrap());
+            //     // }
+            // }
         }
-
     }
 
-    // Iterate through each pixel in the input image
-    // for (x, y, pixel) in img.to_rgb8().enumerate_pixels()[0] {
-    //     // Adjust brightness
-    //     // let adjusted_pixel = adjust_brightness(pixel, brightness_factor);
-    //     // Convert RGB to HSV
+    for r in &rectangles {
+        println!(
+            "X: {}, Y: {}, Width: {}, Height {}",
+            r.x_pos, r.y_pos, r.width, r.height
+        );
+        r.print_to_screen(&mut output_img, white)
+    }
+    // rectangles[1].print_to_screen(&mut output_img, Rgb([0, 255, 0]));
+    // rectangles[1].print_to_screen(&mut output_img, white);
+    // rectangles[1].print_to_screen(&mut output_img, Rgb([50, 50, 50]));
 
-    //     let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
+    // Save the output image
+    output_img.save("hello.jpg").expect("Failed to save image");
+}
+
+fn check_color(rgb: [u8; 3], hue: (u16, u16), sat: (u8, u8), light: (u8, u8)) -> bool {
+    let hsl = rgb_to_hsl(rgb);
+
+    is_color_equal(hsl, hue, sat, light)
+}
+
+pub enum Colory {
+    Red,
+    Yellow,
+    Blue,
+    Green,
+}
+
+fn get_object(
+    pixels: &RgbImage,
+    start_x: u32,
+    start_y: u32,
+    color: Colory,
+    output: &mut RgbImage,
+) -> Option<Rectangle> {
+    let mut curr_width_forward = 0;
+    let mut curr_width_backward = 0;
+
+    // let mut big_f = 0;
+    // let mut big_b = 0;
+    let hue_range;
+    let sat_range;
+    let light_range;
 
     //     let check_yellow = check_color(hsl, (45, 65), (40, 100), (0, 60));
 
@@ -199,79 +246,169 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
 
     //     let check_blue = check_color(hsl, (200, 240), (40, 100), (10, 50));
 
-    //     // let check_red1 = check_color(hsl, (0, 359), (0, 100), (0, 100));
-    //     let check_red2 = check_color(hsl, (330, 359), (20, 100), (0, 50));
+    match color {
+        Colory::Red => {
+            hue_range = (330, 359);
+            sat_range = (20, 100);
+            light_range = (0, 50);
+        }
+        Colory::Yellow => {
+            hue_range = (45, 65);
+            sat_range = (40, 100);
+            light_range = (0, 60);
+        }
+        Colory::Blue => {
+            hue_range = (200, 240);
+            sat_range = (40, 100);
+            light_range = (10, 50);
+        }
+        Colory::Green => {
+            hue_range = (90, 160);
+            sat_range = (30, 100);
+            light_range = (0, 70);
+        }
+    }
 
-    //     // if check_green {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
-    //     // if check_yellow {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
+    let mut y_test = start_y;
+    loop {
+        let pixel_forward = pixels[(curr_width_forward + start_x, y_test)];
+        let pixel_back = pixels[(start_x - curr_width_backward, y_test)];
 
-    //     // if check_red2 {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
+        let check_forward = check_color(pixel_forward.0, hue_range, sat_range, light_range);
+        let check_backward = check_color(pixel_back.0, hue_range, sat_range, light_range);
 
-    //     // if check_blue {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
+        if check_forward {
+            curr_width_forward += 1;
+        }
+        if check_backward {
+            curr_width_backward += 1;
+        }
 
-    //     // if too_low_sat || unallowed_brightness {
-    //     //     output_img.put_pixel(x, y, black);
-    //     //     continue;
-    //     // }
-    //     // println!("Hue {}, satur {},  Brightness {},", hsv[0], hsv[1], hsv[2]);
-    //     // Check for yellow
-    //     // if curr_hue >= yellow_hue_range.0 && curr_hue <= yellow_hue_range.1 {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
+        if !check_forward && !check_backward {
+            y_test += 1;
+            let mut move_down = false;
+            for i in 0..5 {
+                let pixel_now = pixels[(start_x, y_test + i)];
+                let hsl_yep = rgb_to_hsl([pixel_now[0], pixel_now[1], pixel_now[2]]);
+                let m = is_color_equal(hsl_yep, hue_range, sat_range, light_range);
+                if m == true {
+                    move_down = true;
+                    break;
+                }
+            }
+            if move_down {
+            } else {
+                break;
+            }
+        }
+    }
 
-    //     output_img.put_pixel(x, y, *pixel);
-    //     if y == 215 {
-    //         output_img.put_pixel(x, y, white)
+    if curr_width_backward + curr_width_forward < 20 {
+        return None;
+    }
+    let x_pos = start_x - curr_width_backward;
+    let the_width = curr_width_forward + curr_width_backward;
+
+    let mut height_down = 0;
+    let mut height_up = 0;
+
+    let free_down = 15;
+
+    let mut x_test = 0;
+    loop {
+        let pixel_down_right = pixels[(start_x + x_test, start_y + height_down + free_down)];
+        let pixel_up_right = pixels[(start_x + x_test, start_y - height_up)];
+
+        let pixel_up_left = pixels[(start_x - x_test, start_y - height_up)];
+        let pixel_down_left = pixels[(start_x - x_test, start_y + height_down + free_down)];
+
+        let is_down_right = check_color(pixel_down_right.0, hue_range, sat_range, light_range);
+        let is_up_right = check_color(pixel_up_right.0, hue_range, sat_range, light_range);
+
+        let is_up_left = check_color(pixel_up_left.0, hue_range, sat_range, light_range);
+        let is_down_left = check_color(pixel_down_left.0, hue_range, sat_range, light_range);
+
+        if is_up_left || is_up_right {
+            height_up += 5;
+        }
+
+        if is_down_left || is_down_right {
+            height_down += 5;
+        }
+        // let hsl_forward = rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
+        // let hsl_backward = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
+
+        // let check_f = check_color(hsl_forward, hue_range, sat_range, light_range);
+        // let check_b = check_color(hsl_backward, hue_range, sat_range, light_range);
+
+        // if check_f {
+        //     curr_width_forward += 1;
+        // }
+        // if check_b {
+        //     curr_width_backward += 1;
+        // }
+
+        if !is_up_left || !is_up_right || !is_down_left || !is_down_right {
+            x_test += 1;
+            let mut move_left = false;
+            for i in 0..5 {
+                let pixel_right = pixels[(start_x + x_test + i, start_y + free_down)];
+                let pixel_left = pixels[(start_x - x_test - i, start_y + free_down)];
+
+                let m = check_color(pixel_right.0, hue_range, sat_range, light_range)
+                    || check_color(pixel_left.0, hue_range, sat_range, light_range);
+
+                if m == true {
+                    move_left = true;
+                    break;
+                }
+            }
+            if move_left {
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
+    let y_pos = start_y - height_up;
+
+    if height_down < 20 {
+        return None;
+    }
+
+    let the_height = height_up + height_down + free_down;
+    // output.put_pixel(x_pos, start_y, Rgb([0, 255, 0]));
+    //    output.save("yepperssss.jpg").unwrap();
+
+    // for i in 0..the_height { // maybe needed, we will see. if my width get wierd.
+    //     loop {
+    //         let pixel_back = pixels[(start_x - curr_width_backward, y_pos + i)];
+    //         let pixel_forward = pixels[(start_x + curr_width_forward, y_pos + i)];
+    //         let hsl_b = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
+    //         let hsl_f = rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
+    //         let check_bb = check_color(hsl_b, hue_range, sat_range, light_range);
+    //         let check_ff = check_color(hsl_f, hue_range, sat_range, light_range);
+
+    //         if check_bb {
+    //             curr_width_backward += 1;
+    //         }
+    //         if check_ff {
+    //             curr_width_forward += 1;
+    //         }
+
+    //         if !check_bb && !check_bb {
+    //             break;
+    //         }
     //     }
+    //  }
 
-    //     if y == 305 {
-    //         output_img.put_pixel(x, y, white)
-    //     }
-
-    //     if x == 125 {
-    //         output_img.put_pixel(x, y, white);
-    //     }
-
-    //     if x == img.width() - 100 {
-    //         output_img.put_pixel(x, y, white);
-    //     }
-    //     // if hsv[0] >= green_hue_range.0 && hsv[0] <= green_hue_range.1 {
-    //     //     output_img.put_pixel(x, y, Rgb([124, 254, 0]));
-    //     //     all_green.push((x, y, Rgb([124, 254, 0])));
-    //     //     continue;
-    //     // }
-
-    //     // if hsv[0] >= yellow_hue_range.0 && hsv[0] <= yellow_hue_range.1 {
-    //     //     output_img.put_pixel(x, y, *pixel);
-    //     //     continue;
-    //     // }
-
-    //     // output_img.put_pixel(x, y, black);
-
-    //     // } else if (hsv[0] >= 150.0 && hsv[0] <= 210.0) && hsv[2] > 0.5 {
-    //     //     output_img.put_pixel(x, y, adjusted_pixel);
-    //     // } else if ((hsv[0] >= -30.0 && hsv[0] <= 30.0) || (hsv[0] >= 150.0 && hsv[0] <= 180.0))
-    //     //     && hsv[2] > 0.5
-    //     // {
-    //     //     output_img.put_pixel(x, y, adjusted_pixel);
-    //     // }
-    // }
-
-    // Save the output image
-    output_img.save(output_path).expect("Failed to save image");
+    Some(Rectangle {
+        x_pos,
+        y_pos,
+        width: the_width,
+        height: the_height,
+        color,
+    })
 }
 
 // 3280x2464 pixels

@@ -466,9 +466,12 @@ pub fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom, FloatCustom, Flo
 
 pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
     let cell = get_cell_pos(x, y);
+    GetPoseR::send_immediate_command(fd);
+    println!("stuff");
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
 
+    println!("Clear");
     let pos = GetPoseR::send_immediate_command(fd).unwrap();
     let mut curr = queue::CurrentIndex::send_get_command(fd)
         .unwrap()
@@ -606,6 +609,7 @@ fn main() {
         //  protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
 
         // // thread::sleep(Duration::from_millis(2000));
+<<<<<<< HEAD
     //     println!("yeppers");
     //     //thread::sleep(Duration::from_millis(1000));
     //     //protocol::GetPoseR::send_immediate_command(fd);
@@ -623,6 +627,17 @@ fn main() {
 
     //     protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
       //  protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+=======
+        // protocol::EMotor::send_immediate_command(fd, &1, &1, &IntCustom::new(10000));
+        // // sensor::get_infrared_state(fd, 0);
+        // loop {
+        //     if sensor::get_infrared_state(fd, 0) == 1 {
+        //         break;
+        //     }
+        // }
+
+        // protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+>>>>>>> 61611d5 (yep)
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));

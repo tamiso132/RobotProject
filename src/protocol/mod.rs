@@ -30,6 +30,9 @@ impl IntCustom {
         let hex_float = val.to_le_bytes();
         Self { hex_float }
     }
+    pub fn to_integer(&self) -> u32{
+        u32::from_le_bytes(self.hex_float)
+    }
 }
 
 
@@ -37,8 +40,9 @@ impl IntCustom {
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct Empty;
 impl FloatCustom {
-    pub fn to_float(&mut self) -> f32 {
-        f32::from_le_bytes(self.hex_float.clone())
+    pub fn to_float(&self) -> f32 {
+       // f32::from_ne_bytes(self.hex_float.clone())
+       f32::from_le_bytes(self.hex_float.clone())
     }
 
     pub fn new(f: f32) -> FloatCustom {
@@ -47,7 +51,7 @@ impl FloatCustom {
         Self { hex_float }
     }
     pub fn increase_by_one(&mut self) {
-        self.hex_float = FloatCustom::new(self.to_float() + 1.0).hex_float;
+       // self.hex_float = FloatCustom::new(self.to_float() + 1.0).hex_float;
     }
 
     pub fn test_new(hex_float:[u8; 4]) -> Self{
@@ -198,7 +202,6 @@ macro_rules! response2 {
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name>();
 
                 for e in &send_packet{
-                    println!("{:#02x}", e)
                 }
 
                 let mut buffer:[u8; 256] = [0; 256];
@@ -265,7 +268,6 @@ macro_rules! response2 {
                 $(
                     let mut field = bincode::serialize(&$field).unwrap();
                     len += field.len() as u8;
-                    println!("Len: {}", field.len());
                     for f in &field{
                         checksum = u8::overflowing_add(*f, checksum).0;
 
@@ -293,9 +295,9 @@ macro_rules! response2 {
 
                 //  println!("New Start");
 
-                for e in &s_packet{
-                    println!("{:#02x}", e);
-                }
+                // for e in &s_packet{
+                //     println!("{:#02x}", e);
+                // }
 
                 unsafe{
                     let bytes_written = write(fd, s_packet);
@@ -303,7 +305,6 @@ macro_rules! response2 {
                     let mut buffer:[u8; 256] = [0; 256];
                     let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
 
-                    println!("bytes read: {}", bytes_read);
 
                    
                     if queue == 1 && bytes_read != 0{
@@ -476,7 +477,6 @@ pub mod sensor{
         
         let mut send_packet = vec![];
 
-        println!("hello");
         
         send_packet.append(&mut header1_list);
         send_packet.push(4);
@@ -485,10 +485,8 @@ pub mod sensor{
         send_packet.push(2);
         send_packet.push(0);
         send_packet.push(checksum);
-        println!("start");
 
         for e in &send_packet{
-            println!("{:#02x}", e);
         }
      
 
@@ -498,7 +496,6 @@ pub mod sensor{
             let read = cbinding::read(fd, buffer.len() as i32, buffer.as_mut_ptr());
 
             for i in 0..read{
-                println!("{}", buffer[i as usize]);
             }
             return buffer[5];
         }

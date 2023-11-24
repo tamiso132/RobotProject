@@ -30,9 +30,6 @@ impl IntCustom {
         let hex_float = val.to_le_bytes();
         Self { hex_float }
     }
-    pub fn to_integer(&self) -> u32{
-        u32::from_le_bytes(self.hex_float)
-    }
 }
 
 

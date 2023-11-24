@@ -115,6 +115,8 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
     // Create an output image with the same dimensions
     let mut output_img = RgbImage::new(img.width(), img.height());
 
+    
+
     // Define the updated HSV range for green
     // Define the updated HSV range for green
 
@@ -124,13 +126,23 @@ fn extract_color_pixels(input_path: &str, output_path: &str, brightness_factor: 
     let width = img.width();
     let height = img.height();
 
-    let start_x = 125;
-    let end_x = img.width() - 100;
+    let start_x = 100;
+    let end_x = img.width() - 125;
 
     let start_y = 215;
     let end_y = 305;
 
     let pixels = img.to_rgb8();
+  
+    for x in start_x..end_x{
+        for  y in start_y..end_y{
+            output_img.put_pixel(x, y, pixels[(x,y)]);
+        }
+    }
+
+    output_img.save("tester.jpg");
+    panic!("hey");
+
 
     let mut rectangles: Vec<Rectangle> = vec![];
 
@@ -516,7 +528,7 @@ pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
 fn main() {
     unsafe {
         //  take_picture();
-        // extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
+         extract_color_pixels("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
         // let cv: Vec<u8> = cs.into_bytes_with_nul();
@@ -525,10 +537,11 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        let fd = cbinding::serial_open();
+     //   let fd = cbinding::serial_open();
 
-        move_to_pos_in_grid(fd, 3, 4);
+//        move_to_pos_in_grid(fd, 3, 4);
 
+        
         // homing::Param::send_immediate_command(
         //     fd,
         //     &FloatCustom::new(100.0),
@@ -570,15 +583,23 @@ fn main() {
         //  protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
 
         // // thread::sleep(Duration::from_millis(2000));
-        protocol::EMotor::send_immediate_command(fd, &1, &1, &IntCustom::new(10000));
-        // sensor::get_infrared_state(fd, 0);
-        loop {
-            if sensor::get_infrared_state(fd, 0) == 1 {
-                break;
-            }
-        }
+    //     println!("yeppers");
+    //     //thread::sleep(Duration::from_millis(1000));
+    //     //protocol::GetPoseR::send_immediate_command(fd);
+    //     protocol::EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+    //     sensor::set_infrared_immediate(fd,1, sensor::Port::GP4);
+    //     // sensor::get_infrared_state(fd, 0);
+    //  //   println!("yeppers2");
+    //     loop {
+    //         if sensor::get_infrared_state(fd, 0) == 1 {
+    //             println!("yeppers2");
+    //             break;
+                
+    //         }
+    //     }
 
-        protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+    //     protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+      //  protocol::EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
         // protocol::SuctionCup::send_immediate_command(fd, &1, &1);
 
         // thread::sleep(Duration::from_millis(2000));
@@ -635,6 +656,6 @@ fn main() {
         //     .current_index
         //     >= last_index
         // {}
-        cbinding::close_port(fd);
+       // cbinding::close_port(fd);
     }
 }

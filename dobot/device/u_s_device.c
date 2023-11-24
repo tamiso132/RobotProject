@@ -106,8 +106,8 @@ int configure_serial(int fd)
     options.c_cc[VMIN] = 1;
     options.c_cc[VTIME] = 0;
 
-    options.c_cflag &= ~CRTSCTS;        // turn off hardware flow control
-    options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
+  // options.c_cflag &= ~CRTSCTS;        // turn off hardware flow control
+   // options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
 
     options.c_lflag &= ~ICANON;
     options.c_lflag &= ~ISIG;
@@ -115,9 +115,9 @@ int configure_serial(int fd)
     options.c_oflag &= ~OPOST;
     options.c_oflag &= ~ONLCR;
 
-    printf("hello\n");
-    // options.c_oflag = 0;
-    // options.c_lflag = 0;
+    printf("hello2\n");
+    options.c_oflag = 0;
+    options.c_lflag = 0;
 
     tcflush(fd, TCIFLUSH);
     tcflush(fd, TCOFLUSH);

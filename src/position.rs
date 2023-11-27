@@ -131,12 +131,19 @@ fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatC
 
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
+    let diff_x_step = (pos.x.to_float() - x.to_float()) / 10.0;
+    let diff_y_step = (pos.x.to_float() - x.to_float()) / 10.0;
 
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &pos.y, &pos.z, &r);
-
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &y, &pos.z, &r);
-
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &pos.z, &r);
+    for i in 1..10 {
+        ptp::Cmd::send_queue_command(
+            fd,
+            &ptp::PTPMode::MovlXYZ,
+            &FloatCustom::new(pos.x.to_float() + diff_x_step * i as f32),
+            &FloatCustom::new(pos.y.to_float() + diff_y_step * i as f32),
+            &pos.z,
+            &FloatCustom::new(0.0),
+        );
+    }
 
     let last_index =
         ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &r).unwrap();

@@ -1,6 +1,6 @@
 use std::{thread, time::Duration};
 
-use robotproject::protocol::{ptp, queue, FloatCustom, GetPoseR};
+use robotproject::protocol::{ptp, queue, FloatCustom, GetPoseR, SuctionCup};
 
 const GRID: [(f32, f32, f32, f32); 24] = [
     (120.20642, -85.481865, -40.303055, -35.417606),
@@ -46,6 +46,19 @@ pub fn pick_up_from_conveyor(fd: i32, procentage: f32) {
     let pos = get_conveyor_y(procentage).unwrap();
 
     move_robot(fd, pos.0, pos.1, pos.2, pos.3);
+
+    SuctionCup::send_immediate_command(fd, &1, &1);
+
+    // move to lager
+    move_robot(
+        fd,
+        FloatCustom::new(220.0),
+        FloatCustom::new(0.0),
+        FloatCustom::new(30.0),
+        FloatCustom::new(0.0),
+    );
+
+    SuctionCup::send_immediate_command(fd, &0, &0);
 }
 
 pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
@@ -111,7 +124,7 @@ pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
 //X: -4.9768615, Y: -107.649376, Z: 22.339325, R: -92.64702
 
 const RULLBAND_START: (f32, f32, f32, f32) = (-4.9768615, -95.0, 22.0, 0.0);
-const RULLBAND_END: (f32, f32, f32, f32) = (-11, -190.0, 22.0, 0.0);
+const RULLBAND_END: (f32, f32, f32, f32) = (-11.0, -190.0, 22.0, 0.0);
 
 //80
 
@@ -125,7 +138,7 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
     let z = FloatCustom::new(RULLBAND_START.2);
     let r = FloatCustom::new(RULLBAND_START.3);
 
-    println!("Y: {}",  y.to_float());
+    println!("Y: {}", y.to_float());
 
     Some((x, y, z, r))
     // take picture
@@ -144,8 +157,8 @@ fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatC
     let diff_x_step = (pos.x.to_float() - x.to_float()) / step;
     let diff_y_step = (pos.x.to_float() - x.to_float()) / step;
 
-  //  println("x: {} - {}, {}", pos.x.to_float(), x.to_float());
-   // println("x: {} - {},", pos.y.to_float(), y.to_float());
+    //  println("x: {} - {}, {}", pos.x.to_float(), x.to_float());
+    // println("x: {} - {},", pos.y.to_float(), y.to_float());
 
     for i in 1..step as u32 {
         ptp::Cmd::send_queue_command(
@@ -157,7 +170,6 @@ fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatC
             &FloatCustom::new(0.0),
         );
     }
-
 
     let last_index =
         ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &r).unwrap();

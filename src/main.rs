@@ -4,7 +4,11 @@ use position::pick_up_from_conveyor;
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
-    protocol::{self, homing, ptp, queue, sensor, FloatCustom, GetPoseR, IntCustom, SuctionCup},
+    protocol::{
+        self, homing, ptp, queue,
+        sensor::{self, Port},
+        EMotor, FloatCustom, GetPoseR, IntCustom, SuctionCup,
+    },
 };
 use std::{
     fs,
@@ -39,10 +43,29 @@ pub fn cal(fd: i32) {
     queue::StartExec::send_immediate_command(fd);
     while last_index != curr {
         curr = queue::CurrentIndex::send_get_command(fd)
-        .unwrap()
-        .current_index;
+            .unwrap()
+            .current_index;
     }
     println!("done");
+}
+
+pub fn sort_objects(fd: i32) {
+    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(100000));
+    loop {
+        thread::sleep(Duration::from_millis(100));
+        let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
+        if state == 1 {
+            image::take_picture();
+            let procentage = image::get_rectangle_pos_procentage();
+            position::pick_up_from_conveyor(fd, procentage);
+            continue;
+        }
+    }
+}
+
+pub fn init(fd: i32) {
+    cal(fd);
+    sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 }
 
 // 3280x2464 pixels
@@ -59,9 +82,11 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
+        init(fd);
+        sort_objects(fd);
         //pickup_cube(fd);
-      //  cal(fd);
-     //   pickup_cube(fd);
+        //  cal(fd);
+        //   pickup_cube(fd);
 
         //        move_to_pos_in_grid(fd, 3, 4);
 
@@ -74,13 +99,13 @@ fn main() {
         // );
         // homing::Cmd::send_queue_command(fd, &0);
 
-            let pos = GetPoseR::send_immediate_command(fd).unwrap();
-            let x = pos.x.to_float();
-            let y = pos.y.to_float();
-            let z = pos.z.to_float();
-            let r = pos.r.to_float();
+        let pos = GetPoseR::send_immediate_command(fd).unwrap();
+        let x = pos.x.to_float();
+        let y = pos.y.to_float();
+        let z = pos.z.to_float();
+        let r = pos.r.to_float();
 
-             println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
+        println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
 
         // // // // for e in &pos.y.hex_float {
         // // // //     println!("hex: Y: {:#02x}", e);

@@ -30,7 +30,7 @@ impl Rectangle {
 
 pub fn get_rectangle_pos_procentage() -> f32 {
     // Load the image
-    let img = image::open("src/tyy.jpg").expect("Failed to open image");
+    let img = image::open("src/ty.jpg").expect("Failed to open image");
 
     //img = img.resize(1000, , imageops::FilterType::Nearest);
 
@@ -352,7 +352,7 @@ fn get_object(
         color,
     })
 }
-fn take_picture() {
+pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
         .arg("-o")
         .arg("/home/tom/projects/RobotProject/src/ty.jpg")

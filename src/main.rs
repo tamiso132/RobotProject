@@ -1,5 +1,6 @@
 use colors_transform::Color;
-use image::{get_rectangle, Rectangle};
+use image::{get_rectangle_pos_procentage, Rectangle};
+use position::pick_up_from_conveyor;
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
@@ -17,9 +18,9 @@ use std::{
 mod image;
 mod position;
 
-pub fn pickup_cube(rect: Rectangle) {
-    let procentage = get_rectangle();
-    
+pub fn pickup_cube(fd: i32, rect: Rectangle) {
+    let procentage = get_rectangle_pos_procentage();
+    pick_up_from_conveyor(fd, procentage);
 }
 
 // 3280x2464 pixels

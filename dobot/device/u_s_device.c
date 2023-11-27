@@ -98,7 +98,6 @@ int configure_serial(int fd)
 
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
-    options.c_cflag &= ~PARENB;
     options.c_iflag &= ~(INPCK | PARMRK | ISTRIP);
     options.c_cflag &= ~CSTOPB;
 
@@ -106,16 +105,25 @@ int configure_serial(int fd)
     options.c_cc[VMIN] = 1;
     options.c_cc[VTIME] = 0;
 
+<<<<<<< HEAD
   // options.c_cflag &= ~CRTSCTS;        // turn off hardware flow control
    // options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
+=======
+    // options.c_cflag &= ~CRTSCTS;        // turn off hardware flow control
+    options.c_iflag &= ~(IXON | IXOFF); // turn off sowftware flow control
+>>>>>>> 61611d5 (yep)
 
-    options.c_lflag &= ~ICANON;
-    options.c_lflag &= ~ISIG;
-    options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
-    options.c_oflag &= ~OPOST;
-    options.c_oflag &= ~ONLCR;
+    // options.c_lflag &= ~ICANON;
+    // options.c_lflag &= ~ISIG;
+    // options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
+    // options.c_oflag &= ~OPOST;
+    // options.c_oflag &= ~ONLCR;
 
+<<<<<<< HEAD
     printf("hello2\n");
+=======
+    printf("hello\n");
+>>>>>>> 61611d5 (yep)
     options.c_oflag = 0;
     options.c_lflag = 0;
 

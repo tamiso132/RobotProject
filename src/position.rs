@@ -108,9 +108,12 @@ pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
     }
     queue::StopExec::send_immediate_command(fd);
 }
-// X:X: -3.374155, Y: -100.01023, Z: 21.952965, R: -91.93231
-const RULLBAND_START: (f32, f32, f32, f32) = (-3.374155, -100.0, -22.0, -92.0);
-const RULLBAND_END: (f32, f32, f32, f32) = (-3.374155, -180.0, -22.0, -92.0);
+//X: -4.9768615, Y: -107.649376, Z: 22.339325, R: -92.64702
+
+const RULLBAND_START: (f32, f32, f32, f32) = (-4.9768615, -95.0, 22.0, 0.0);
+const RULLBAND_END: (f32, f32, f32, f32) = (-3.374155, -180.0, 22.0, 0.0);
+
+//80
 
 fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCustom, FloatCustom)> {
     if procentage > 1.0 || procentage < 0.0 {
@@ -118,9 +121,11 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
     }
 
     let x = FloatCustom::new(RULLBAND_START.0);
-    let y = FloatCustom::new((RULLBAND_END.1 - RULLBAND_START.1) * procentage);
+    let y = FloatCustom::new(RULLBAND_START.1 - (RULLBAND_START.1 - RULLBAND_END.1) * procentage);
     let z = FloatCustom::new(RULLBAND_START.2);
     let r = FloatCustom::new(RULLBAND_START.3);
+
+    println!("Y: {}",  y.to_float());
 
     Some((x, y, z, r))
     // take picture
@@ -133,18 +138,22 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
 fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatCustom) {
     let pos = GetPoseR::send_immediate_command(fd).unwrap();
 
+    let step = 15.0;
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
-    let diff_x_step = (pos.x.to_float() - x.to_float()) / 10.0;
-    let diff_y_step = (pos.x.to_float() - x.to_float()) / 10.0;
+    let diff_x_step = (pos.x.to_float() - x.to_float()) / step;
+    let diff_y_step = (pos.x.to_float() - x.to_float()) / step;
 
-    for i in 1..10 {
+  //  println("x: {} - {}, {}", pos.x.to_float(), x.to_float());
+   // println("x: {} - {},", pos.y.to_float(), y.to_float());
+
+    for i in 1..step as u32 {
         ptp::Cmd::send_queue_command(
             fd,
             &ptp::PTPMode::MovlXYZ,
-            &FloatCustom::new(pos.x.to_float() + diff_x_step * i as f32),
-            &FloatCustom::new(pos.y.to_float() + diff_y_step * i as f32),
-            &pos.z,
+            &FloatCustom::new(pos.x.to_float() - diff_x_step * i as f32),
+            &FloatCustom::new(pos.y.to_float() - diff_y_step * i as f32),
+            &FloatCustom::new(35.0),
             &FloatCustom::new(0.0),
         );
     }

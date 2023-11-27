@@ -27,9 +27,9 @@ pub fn cal(fd: i32) {
 
     homing::Param::send_queue_command(
         fd,
-        &FloatCustom::new(100.0),
+        &FloatCustom::new(150.0),
         &FloatCustom::new(0.0),
-        &FloatCustom::new(0.0),
+        &FloatCustom::new(20.0),
         &FloatCustom::new(0.0),
     );
     let last_index = homing::Cmd::send_queue_command(fd, &0).unwrap();
@@ -59,7 +59,7 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
-        pickup_cube(fd);
+        //pickup_cube(fd);
         cal(fd);
         pickup_cube(fd);
 

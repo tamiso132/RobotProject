@@ -60,8 +60,8 @@ fn main() {
 
         let fd = cbinding::serial_open();
         //pickup_cube(fd);
-        cal(fd);
-        pickup_cube(fd);
+      //  cal(fd);
+     //   pickup_cube(fd);
 
         //        move_to_pos_in_grid(fd, 3, 4);
 

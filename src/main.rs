@@ -49,7 +49,6 @@ pub fn cal(fd: i32) {
 fn main() {
     unsafe {
         //  take_picture();
-
         // getob("src/tyy.jpg", "yeppers.jpg", 1.5);
         // let s = String::from("HalloWelt!");
         // let cs = CString::new(s).unwrap();
@@ -60,7 +59,7 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
-        // pickup_cube(fd);
+        pickup_cube(fd);
         cal(fd);
         pickup_cube(fd);
 

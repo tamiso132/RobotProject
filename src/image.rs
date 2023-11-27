@@ -30,7 +30,7 @@ impl Rectangle {
 
 pub fn get_rectangle_pos_procentage() -> f32 {
     // Load the image
-    let img = image::open("src/tty.jpg").expect("Failed to open image");
+    let img = image::open("src/tyy.jpg").expect("Failed to open image");
 
     //img = img.resize(1000, , imageops::FilterType::Nearest);
 

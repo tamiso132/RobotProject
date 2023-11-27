@@ -301,10 +301,8 @@ macro_rules! response2 {
                     let bytes_written = write(fd, s_packet);
                     std::thread::sleep(std::time::Duration::from_millis(100));
                     let mut buffer:[u8; 256] = [0; 256];
-                    println!("start read?");
                     let bytes_read = read(fd, buffer.len() as i32, buffer.as_mut_ptr());
 
-                    println!("does it read?");
                    
                     if queue == 1 && bytes_read != 0{
                         let mut queue_buffer:[u8;8] = [0, 0, 0, 0, 0, 0, 0, 0];

@@ -2,129 +2,74 @@ use std::{thread, time::Duration};
 
 use robotproject::protocol::{ptp, queue, FloatCustom, GetPoseR, SuctionCup};
 
-const GRID: [(f32, f32, f32, f32); 24] = [
-    (120.20642, -85.481865, -40.303055, -35.417606),
-    (154.76396, -100.03103, -44.133507, -32.87643),
-    (184.9903, -116.56075, -43.261543, -32.214664),
-    (214.94167, -126.31306, -44.42035, -30.441135),
-    (130.9671, -65.13826, -41.873077, -26.444077),
-    (161.24797, -77.43004, -43.5082, -25.64996),
-    (193.32906, -90.102325, -41.652092, -24.988194),
-    (224.79176, -100.12502, -44.228027, -24.008781),
-    (139.17743, -40.853374, -43.09153, -16.358782),
-    (168.79364, -52.098347, -41.102554, -17.1529),
-    (202.9993, -65.33675, -42.45054, -17.841135),
-    (202.9993, -65.33675, -42.45054, -17.841135),
-    (150.46698, -18.514116, -42.915535, -7.0146646),
-    (184.4296, -28.599546, -45.358208, -8.814665),
-    (218.01868, -38.25781, -45.29129, -9.9529),
-    (248.21432, -49.015182, -43.225224, -11.1705475),
-    (161.13551, 3.4995544, -45.47975, 1.2441589),
-    (194.09102, -6.189176, -45.30606, -1.8264294),
-    (227.43098, -16.6309, -43.19778, -4.1823115),
-    (259.33014, -21.494867, -45.36095, -4.738194),
-    (162.13339, 29.146744, -44.345734, 10.191217),
-    (190.82622, 19.55182, -44.55007, 5.8500414),
-    (224.13536, 13.373989, -44.890713, 3.414747),
-    (258.1475, 3.5783308, -42.931282, 0.7941588),
-];
+const GRID: [(f32, f32); 24] = [
+    (132.8116,-42.881817),
+    (178.25412,-47.52761),
+    (218.6569,-49.830936),
+    (258.44962,-50.9123),
+    (131.18314,-9.775582),
+    (177.40495,-11.078962),
+    (216.07726,-13.393839),
+(257.4657,-12.618484),
+(133.80498,19.611336),
+(180.43544,20.08916),
+(215.41925,19.359575),
+(259.64697,18.50474),
+(140.71704,46.94687),
+(180.9229,48.866703),
+(218.42476,50.309402),
+(250.42827,54.279274),
+(130.1948,73.38755),
+(168.18134,79.2352),
+(208.03143,82.36565),
+(247.15314,85.76941),
+(116.08774,105.63186),
+(153.79672,108.835075),
+(194.92029,116.61683),
+(234.20761,117.83956)];
+const lager_z:f32 =  -43.0;
+const BASE_LAGER_POS:(f32, f32, f32) = (200.0, 0.0, 30.0);
+// ];
 
-fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom, FloatCustom, FloatCustom) {
-    let index = ((y - 1) * 4 + x) - 1;
+fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
+    let index = (y * 4 + x);
 
     let cell = GRID[index as usize];
 
     (
         FloatCustom::new(cell.0),
         FloatCustom::new(cell.1),
-        FloatCustom::new(cell.2),
-        FloatCustom::new(cell.3),
     )
 }
 
-pub fn pick_up_from_conveyor(fd: i32, procentage: f32) {
+pub fn pick_up_from_conveyor_and_place(fd: i32, procentage: f32) {
     let pos = get_conveyor_y(procentage).unwrap();
 
-    move_robot(fd, pos.0, pos.1, pos.2, pos.3);
+    move_robot(fd, pos.0, pos.1, pos.2);
 
     SuctionCup::send_immediate_command(fd, &1, &1);
-
-    // move to lager
-    move_robot(
-        fd,
-        FloatCustom::new(220.0),
-        FloatCustom::new(0.0),
-        FloatCustom::new(30.0),
-        FloatCustom::new(0.0),
-    );
+    println!("Coming to lagret now");
+    move_to_pos_in_grid(fd, 0,0);
+    println!("done with lagret");
 
     SuctionCup::send_immediate_command(fd, &0, &0);
+    go_default_lager_pos(fd);
+    return;
 }
-
+fn go_default_lager_pos(fd:i32){
+    move_robot(fd, FloatCustom::new(BASE_LAGER_POS.0),  FloatCustom::new(BASE_LAGER_POS.1),  FloatCustom::new(BASE_LAGER_POS.2))
+    
+}
 pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
     let cell = get_cell_pos(x, y);
-    GetPoseR::send_immediate_command(fd);
-    println!("stuff");
-    queue::StopExec::send_immediate_command(fd);
-    queue::ClearExec::send_immediate_command(fd);
-
-    println!("Clear");
-    let pos = GetPoseR::send_immediate_command(fd).unwrap();
-    let mut curr = queue::CurrentIndex::send_get_command(fd)
-        .unwrap()
-        .current_index;
-
-    println!("before start: {}", curr);
-
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &cell.0, &pos.y, &pos.z, &pos.r);
-
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &cell.0, &cell.1, &pos.z, &pos.r);
-
-    ptp::Cmd::send_queue_command(
-        fd,
-        &ptp::PTPMode::MovlXYZ,
-        &cell.0,
-        &cell.1,
-        &pos.z,
-        &cell.3,
-    );
-    ptp::Cmd::send_queue_command(
-        fd,
-        &ptp::PTPMode::MovlXYZ,
-        &cell.0,
-        &cell.1,
-        &cell.2,
-        &pos.r,
-    );
-
-    let last_index = ptp::Cmd::send_queue_command(
-        fd,
-        &ptp::PTPMode::MovlXYZ,
-        &cell.0,
-        &cell.1,
-        &cell.2,
-        &cell.3,
-    )
-    .unwrap();
-
-    queue::StartExec::send_immediate_command(fd);
-    curr = queue::CurrentIndex::send_get_command(fd)
-        .unwrap()
-        .current_index;
-    while last_index != curr {
-        thread::sleep(Duration::from_millis(100));
-        curr = queue::CurrentIndex::send_get_command(fd)
-            .unwrap()
-            .current_index;
-
-        println!("last index: {}, current index: {}", last_index, curr);
-    }
-    queue::StopExec::send_immediate_command(fd);
+    //go_default_lager_pos(fd);
+    move_robot(fd, cell.0, cell.1, FloatCustom::new(lager_z));
+    //go_default_lager_pos(fd);
 }
 //X: -4.9768615, Y: -107.649376, Z: 22.339325, R: -92.64702
 
-const RULLBAND_START: (f32, f32, f32, f32) = (-4.9768615, -95.0, 22.0, 0.0);
-const RULLBAND_END: (f32, f32, f32, f32) = (-11.0, -190.0, 22.0, 0.0);
+const RULLBAND_START: (f32, f32, f32, f32) = (-8.235003,-97.1714, 17.1, 0.0);
+const RULLBAND_END: (f32, f32, f32, f32) = (-6.80, -196.0, 17.1, 0.0);
 
 //80
 
@@ -133,10 +78,10 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
         return None;
     }
 
-    let x = FloatCustom::new(RULLBAND_START.0);
+    let x = FloatCustom::new(RULLBAND_START.0 - (RULLBAND_START.0 - RULLBAND_END.0) * procentage);
     let y = FloatCustom::new(RULLBAND_START.1 - (RULLBAND_START.1 - RULLBAND_END.1) * procentage);
     let z = FloatCustom::new(RULLBAND_START.2);
-    let r = FloatCustom::new(RULLBAND_START.3);
+    let r = FloatCustom::new(0.0);
 
     println!("Y: {}", y.to_float());
 
@@ -148,31 +93,33 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
 // first: X: 127.80598, Y: -99.61005, Z: 62.348213, R: -37.932312
 // second //  X: 48.42568, Y: -167.83894, Z: 95.0106, R: -73.90584
 
-fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatCustom) {
+fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom) {
     let pos = GetPoseR::send_immediate_command(fd).unwrap();
 
-    let step = 15.0;
+    let step = 10.0;
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
-    let diff_x_step = (pos.x.to_float() - x.to_float()) / step;
-    let diff_y_step = (pos.x.to_float() - x.to_float()) / step;
+    let diff_x_step = (pos.x.to_float() - x.to_float()) / (step as f32);
+    let diff_y_step = (pos.y.to_float() - y.to_float()) / (step as f32);
+    let diff_r_step = pos.r.to_float()/ step as f32;
 
     //  println("x: {} - {}, {}", pos.x.to_float(), x.to_float());
     // println("x: {} - {},", pos.y.to_float(), y.to_float());
+    for i in 1..(step+1.0) as u32  {
 
-    for i in 1..step as u32 {
+       
         ptp::Cmd::send_queue_command(
             fd,
             &ptp::PTPMode::MovlXYZ,
-            &FloatCustom::new(pos.x.to_float() - diff_x_step * i as f32),
-            &FloatCustom::new(pos.y.to_float() - diff_y_step * i as f32),
+            &FloatCustom::new(pos.x.to_float() - i as f32 * diff_x_step as f32),
+            &FloatCustom::new(pos.y.to_float() - i as f32 * diff_y_step as f32),
             &FloatCustom::new(35.0),
             &FloatCustom::new(0.0),
         );
     }
 
     let last_index =
-        ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &r).unwrap();
+        ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &FloatCustom::new(0.0)).unwrap();
 
     let mut curr = queue::CurrentIndex::send_get_command(fd)
         .unwrap()
@@ -184,4 +131,6 @@ fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatC
             .unwrap()
             .current_index;
     }
+    queue::StopExec::send_immediate_command(fd);
+    queue::ClearExec::send_immediate_command(fd);
 }

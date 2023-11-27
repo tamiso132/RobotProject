@@ -1,6 +1,6 @@
 use colors_transform::Color;
 use image::{get_rectangle_pos_procentage, Rectangle};
-use position::pick_up_from_conveyor;
+use position::pick_up_from_conveyor_and_place;
 use robotproject::{
     self,
     cbinding::{self, close_port, read, write},
@@ -22,7 +22,7 @@ mod position;
 
 pub fn pickup_cube(fd: i32) {
     let procentage = get_rectangle_pos_procentage();
-    pick_up_from_conveyor(fd, procentage);
+    pick_up_from_conveyor_and_place(fd, procentage);
 }
 
 pub fn cal(fd: i32) {
@@ -50,14 +50,17 @@ pub fn cal(fd: i32) {
 }
 
 pub fn sort_objects(fd: i32) {
-    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(100000));
+    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
     loop {
         thread::sleep(Duration::from_millis(100));
         let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
         if state == 1 {
+            EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
             image::take_picture();
             let procentage = image::get_rectangle_pos_procentage();
-            position::pick_up_from_conveyor(fd, procentage);
+            position::pick_up_from_conveyor_and_place(fd, procentage);
+            return;
+            EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
             continue;
         }
     }
@@ -82,7 +85,7 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
-        init(fd);
+       // init(fd);
         sort_objects(fd);
         //pickup_cube(fd);
         //  cal(fd);
@@ -98,14 +101,14 @@ fn main() {
         //     &FloatCustom::new(0.0),
         // );
         // homing::Cmd::send_queue_command(fd, &0);
-
+        position::move_to_pos_in_grid(fd, 0, 0);
         let pos = GetPoseR::send_immediate_command(fd).unwrap();
         let x = pos.x.to_float();
         let y = pos.y.to_float();
         let z = pos.z.to_float();
         let r = pos.r.to_float();
-
-        println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
+// (120.20642, -85.481865, -40.303055, -35.417606)
+        println!("({},{}, {}),", x, y, z);
 
         // // // // for e in &pos.y.hex_float {
         // // // //     println!("hex: Y: {:#02x}", e);

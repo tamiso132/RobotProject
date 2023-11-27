@@ -37,7 +37,11 @@ pub fn cal(fd: i32) {
         .unwrap()
         .current_index;
     queue::StartExec::send_immediate_command(fd);
-    while last_index != curr {}
+    while last_index != curr {
+        curr = queue::CurrentIndex::send_get_command(fd)
+        .unwrap()
+        .current_index;
+    }
     println!("done");
 }
 
@@ -58,6 +62,7 @@ fn main() {
         let fd = cbinding::serial_open();
         // pickup_cube(fd);
         cal(fd);
+        pickup_cube(fd);
 
         //        move_to_pos_in_grid(fd, 3, 4);
 
@@ -70,13 +75,13 @@ fn main() {
         // );
         // homing::Cmd::send_queue_command(fd, &0);
 
-        //     let pos = GetPoseR::send_immediate_command(fd).unwrap();
-        //     let x = pos.x.to_float();
-        //     let y = pos.y.to_float();
-        //     let z = pos.z.to_float();
-        //     let r = pos.r.to_float();
+            let pos = GetPoseR::send_immediate_command(fd).unwrap();
+            let x = pos.x.to_float();
+            let y = pos.y.to_float();
+            let z = pos.z.to_float();
+            let r = pos.r.to_float();
 
-        //      println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
+             println!("X: {}, Y: {}, Z: {}, R: {}", x, y, z, r);
 
         // // // // for e in &pos.y.hex_float {
         // // // //     println!("hex: Y: {:#02x}", e);

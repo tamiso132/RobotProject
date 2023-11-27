@@ -126,17 +126,18 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
     // take picture
 }
 
+// walk to rullband // from lager
+// first: X: 127.80598, Y: -99.61005, Z: 62.348213, R: -37.932312
+// second //  X: 48.42568, Y: -167.83894, Z: 95.0106, R: -73.90584
+
 fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatCustom) {
     let pos = GetPoseR::send_immediate_command(fd).unwrap();
 
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
 
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &pos.y, &pos.z, &r);
-
-    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &y, &pos.z, &r);
-
     ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &pos.z, &r);
+
 
     let last_index =
         ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &r).unwrap();

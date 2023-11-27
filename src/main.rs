@@ -7,8 +7,6 @@ use robotproject::{
     protocol::{self, homing, ptp, queue, sensor, FloatCustom, GetPoseR, IntCustom, SuctionCup},
 };
 use std::{
-    cmp,
-    ffi::CString,
     fs,
     process::Command,
     thread::{self, Thread},
@@ -21,6 +19,26 @@ mod position;
 pub fn pickup_cube(fd: i32) {
     let procentage = get_rectangle_pos_procentage();
     pick_up_from_conveyor(fd, procentage);
+}
+
+pub fn cal(fd: i32) {
+    queue::StopExec::send_immediate_command(fd);
+    queue::ClearExec::send_immediate_command(fd);
+
+    homing::Param::send_queue_command(
+        fd,
+        &FloatCustom::new(100.0),
+        &FloatCustom::new(0.0),
+        &FloatCustom::new(0.0),
+        &FloatCustom::new(0.0),
+    );
+    let last_index = homing::Cmd::send_queue_command(fd, &0).unwrap();
+    let mut curr = queue::CurrentIndex::send_get_command(fd)
+        .unwrap()
+        .current_index;
+    queue::StartExec::send_immediate_command(fd);
+    while last_index != curr {}
+    println!("done");
 }
 
 // 3280x2464 pixels
@@ -37,22 +55,20 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-         let fd = cbinding::serial_open();
+        let fd = cbinding::serial_open();
         // pickup_cube(fd);
+        cal(fd);
 
         //        move_to_pos_in_grid(fd, 3, 4);
-        queue::StopExec::send_immediate_command(fd);
-        queue::ClearExec::send_immediate_command(fd);
 
-            // homing::Param::send_queue_command(
-            //     fd,
-            //     &FloatCustom::new(100.0),
-            //     &FloatCustom::new(0.0),
-            //     &FloatCustom::new(0.0),
-            //     &FloatCustom::new(0.0),
-            // );
-            // homing::Cmd::send_queue_command(fd, &0);
-            pickup_cube(fd);
+        // homing::Param::send_queue_command(
+        //     fd,
+        //     &FloatCustom::new(100.0),
+        //     &FloatCustom::new(0.0),
+        //     &FloatCustom::new(0.0),
+        //     &FloatCustom::new(0.0),
+        // );
+        // homing::Cmd::send_queue_command(fd, &0);
 
         //     let pos = GetPoseR::send_immediate_command(fd).unwrap();
         //     let x = pos.x.to_float();
@@ -68,7 +84,7 @@ fn main() {
         //     thread::sleep(Duration::from_millis(2000));
         //    // let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(100.0), &FloatCustom::new(-170.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
         //     let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(25.0), &FloatCustom::new(-200.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
-         queue::StartExec::send_immediate_command(fd);
+        queue::StartExec::send_immediate_command(fd);
         // println!("({},{},{}, {})", x, y, pos.z.to_float(), pos.r.to_float());
         // // 120, -85, -30, 0, first row
         // //x, 120 -> 215
@@ -199,6 +215,6 @@ fn main() {
         //     .current_index
         //     >= last_index
         // {}
-         cbinding::close_port(fd);
+        cbinding::close_port(fd);
     }
 }

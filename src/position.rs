@@ -44,7 +44,8 @@ fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom, FloatCustom, FloatCu
 
 pub fn pick_up_from_conveyor(fd: i32, procentage: f32) {
     let pos = get_conveyor_y(procentage).unwrap();
-    ptp::Cmd::send_immediate_command(fd, &ptp::PTPMode::MovlXYZ, &pos.0, &pos.1, &pos.2, &pos.3);
+
+    move_robot(fd, pos.0, pos.1, pos.2, pos.3);
 }
 
 pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
@@ -97,8 +98,6 @@ pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
     curr = queue::CurrentIndex::send_get_command(fd)
         .unwrap()
         .current_index;
-    println!("last index: {}", last_index);
-    println!("Current index: {}", curr);
     while last_index != curr {
         thread::sleep(Duration::from_millis(100));
         curr = queue::CurrentIndex::send_get_command(fd)
@@ -125,4 +124,31 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
 
     Some((x, y, z, r))
     // take picture
+}
+
+fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, r: FloatCustom) {
+    let pos = GetPoseR::send_immediate_command(fd).unwrap();
+
+    queue::StopExec::send_immediate_command(fd);
+    queue::ClearExec::send_immediate_command(fd);
+
+    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &pos.y, &pos.z, &r);
+
+    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &pos.x, &y, &pos.z, &r);
+
+    ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &pos.z, &r);
+
+    let last_index =
+        ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ, &x, &y, &z, &r).unwrap();
+
+    let mut curr = queue::CurrentIndex::send_get_command(fd)
+        .unwrap()
+        .current_index;
+    queue::StartExec::send_immediate_command(fd);
+    while last_index != curr {
+        thread::sleep(Duration::from_millis(100));
+        curr = queue::CurrentIndex::send_get_command(fd)
+            .unwrap()
+            .current_index;
+    }
 }

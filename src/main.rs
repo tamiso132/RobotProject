@@ -10,11 +10,17 @@ use robotproject::{
         EMotor, FloatCustom, GetPoseR, IntCustom, SuctionCup,
     },
 };
+
+use serde_derive::{Deserialize, Serialize};
+use serde_json::json;
+
 use std::{
-    fs,
+    fs::File,
+    io::prelude::*,
     process::Command,
     thread::{self, Thread},
     time::Duration,
+    net::{TcpListener, TcpStream},
 };
 
 mod image;
@@ -86,6 +92,36 @@ pub fn init(fd: i32) {
     cal(fd);
     sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 }
+#[derive(Serialize, Deserialize)]
+struct Position{
+    x:usize,
+    y:usize,
+}
+#[derive(Serialize, Deserialize)]
+struct CommandZero{
+    command:u8,
+    order_id:u16,
+    positions:Vec<Position>,
+
+}
+
+pub fn read_request(ss:&str){
+
+    let f_s = "\"command\":";
+    let get_command = ss[ss.find(f_s).unwrap()+f_s.len()..ss.find(f_s).unwrap()+f_s.len() +1].parse::<u8>().unwrap();
+
+
+    match get_command{
+        0 => {
+            println!("Command 0");
+            let yep:CommandZero = serde_json::from_str(ss).unwrap();
+        },
+        1 => {
+
+        },
+        _ => {},
+    }
+}
 
 // 3280x2464 pixels
 fn main() {
@@ -101,13 +137,27 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
+        // let listener = TcpListener::bind("192.168.88.125:7878").unwrap();
+        // for stream in listener.incoming(){
+        //     let mut s:[u8;4028] = [0;4028];
+        //     let mut stream = stream.unwrap();
+        //     let read = stream.read(&mut s).unwrap();
+        //     let mut sy = String::from_utf8(s.to_vec()).unwrap();
+        //     let mut ss = &sy[0..read];
+        //     read_request(ss);
+        // }
         init(fd);
-        sort_all_objects(fd, 0);
-      // image::take_picture();
+     //   position::go_to_order(fd);
+        // sort_all_objects(fd, 0);
+        // image::take_picture();
        // get_rectangle_pos_procentage();
         //pickup_cube(fd);
         //  cal(fd);
         //   pickup_cube(fd);
+
+ 
+
+
 
         //        move_to_pos_in_grid(fd, 3, 4);
 

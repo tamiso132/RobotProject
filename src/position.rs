@@ -31,6 +31,24 @@ const lager_z:f32 =  -43.0;
 const BASE_LAGER_POS:(f32, f32, f32) = (200.0, 0.0, 30.0);
 const BASE_PICKUP_POS:(f32, f32, f32) = (96.0, -153.0, 30.0);
 // ];
+// 51, 146, 175
+ // -20, 155, 175
+ // -120, 161, 175
+
+const ORDER_GRID : [(f32, f32);3] = [(51.0, 146.0), (-20.0, 155.0), (-120.0, 161.0)]; 
+const ORDER_Z:f32 = 175.0;
+
+
+pub fn go_to_order(fd:i32){
+    let pos = GetPoseR::send_immediate_command(fd).unwrap();
+    let x = pos.x.to_float();
+    let y = pos.y.to_float();
+    let z = pos.z.to_float();
+    let r = pos.r.to_float();
+    println!("yeppers");
+    move_robot(fd, FloatCustom::new(140.0), FloatCustom::new(3.0), FloatCustom::new(150.0), 10.0);
+    move_robot(fd, FloatCustom::new(ORDER_GRID[0].0), FloatCustom::new(ORDER_GRID[0].0), FloatCustom::new(ORDER_Z), 10.0);
+}
 
 fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
     let index = (y * 4 + x);

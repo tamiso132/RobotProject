@@ -46,10 +46,10 @@ pub fn get_rectangle_pos_procentage() -> f32 {
     let width = img.width();
     let height = img.height();
 
-    let start_x = 130;
-    let end_x = img.width() - 100;
+    let start_x = 165;
+    let end_x = img.width() - 130;
 
-    let start_y = 215;
+    let start_y = 225;
     let end_y = 300;
 
     let mut output_img = RgbImage::new(end_x - start_x, end_y - start_y);
@@ -62,13 +62,13 @@ pub fn get_rectangle_pos_procentage() -> f32 {
             output_img.put_pixel(x-start_x, y-start_y, orginal[(x, y)]);
         }
     }
+   
     output_img.save("output.jpg");
-
     let pixels = output_img;
     let mut rectangles: Vec<Rectangle> = vec![];
 
-    for y in 0..pixels.height() {
-        for x in 0..pixels.width() {
+    for y in 0..end_y-start_y {
+        for x in 0..end_x-start_x {
             let mut in_bound = false;
             for r in &rectangles {
                 if r.in_bound(x as i32, y as i32, 20 as i32) {
@@ -96,7 +96,6 @@ pub fn get_rectangle_pos_procentage() -> f32 {
                 // output_img.put_pixel(x, y, pixel);
                 let rectangle = get_object(&pixels, x, y, Colory::Red);
                 if rectangle.is_some() {
-                    println!("{},{}", x, y);
                     rectangles.push(rectangle.unwrap());
                     continue;
                 }
@@ -106,7 +105,6 @@ pub fn get_rectangle_pos_procentage() -> f32 {
                 //  output_img.put_pixel(x, y, pixel);
                 let rectangle = get_object(&pixels, x, y, Colory::Yellow);
                 if rectangle.is_some() {
-                    println!("{},{}", x, y);
                     rectangles.push(rectangle.unwrap());
                     continue;
                 }
@@ -114,7 +112,6 @@ pub fn get_rectangle_pos_procentage() -> f32 {
             if check_blue {
                 let rectangle = get_object(&pixels, x, y, Colory::Blue);
                 if rectangle.is_some() {
-                    println!("{},{}", x, y);
                     rectangles.push(rectangle.unwrap());
                     continue;
                 }
@@ -123,7 +120,6 @@ pub fn get_rectangle_pos_procentage() -> f32 {
             if check_green {
                 let rectangle = get_object(&pixels, x, y, Colory::Green);
                 if rectangle.is_some() {
-                    println!("{},{}", x, y);
                     rectangles.push(rectangle.unwrap());
                     continue;
                 }
@@ -139,22 +135,16 @@ pub fn get_rectangle_pos_procentage() -> f32 {
     };
     let mut biggest_y = 0;
     for r in rectangles {
-        println!(
-            "X: {}, Y: {}, Width: {}, Height {}",
-            r.x_pos, r.y_pos, r.width, r.height
-        );
-
         if biggest_y < r.y_pos + r.height {
             rec_check = r;
             biggest_y = rec_check.y_pos + rec_check.height;
         }
     }
-    let img_width = pixels.width();
-    // println!("procentage: {}, Color: ", procentage_x);
-    let täljare = (rec_check.x_pos as f32) + (rec_check.width as f32/2.0) as f32;
+    let img_width = end_x - start_x;
+    let täljare = (rec_check.x_pos) as f32 + (rec_check.width as f32/2.0) as f32;
     let procentage_x: f32 = 1.0 - (täljare as f32 / img_width as f32) as f32;
     if procentage_x > 1.0 || procentage_x < 0.0{
-        panic!("{}, {}", täljare, procentage_x);
+        panic!("{}, {}, {}", täljare, procentage_x, img_width);
     }
     //pixels.save("hello.jpg");
     procentage_x
@@ -173,6 +163,8 @@ pub enum Colory {
     Blue,
     Green,
 }
+
+
 
 fn get_object(
     pixels: &RgbImage,
@@ -219,31 +211,36 @@ fn get_object(
     }
 
     let mut y_test = start_y;
+
+    let mut test_forward = 1;
+    let mut test_backward = 1;
     loop {
 
         let mut check_forward = false;
         let mut check_backward = false;
 
-        let forward_index = curr_width_forward + start_x;
-        let backward_index = start_x as i32 - curr_width_backward as i32;
+        let forward_index = test_forward + start_x;
+        let backward_index = start_x as i32 - test_backward as i32;
 
-        if forward_index < pixels.width(){
-            let pixel_forward = pixels[(curr_width_forward + start_x, y_test)];
+        if forward_index < pixels.width() as u32{
+            let pixel_forward = pixels[(test_forward + start_x, y_test)];
             check_forward = check_color(pixel_forward.0, hue_range, sat_range, light_range);
         }
 
-        if backward_index >= 0{
-            let pixel_back = pixels[(start_x - curr_width_backward, y_test)];
+        if backward_index >= 0 as i32{
+            let pixel_back = pixels[(start_x - test_backward, y_test)];
             check_backward = check_color(pixel_back.0, hue_range, sat_range, light_range);
         }
 
         
 
         if check_forward {
-            curr_width_forward += 1;
+            curr_width_forward = test_forward;
+            test_forward += 1;
         }
         if check_backward {
-            curr_width_backward += 1;
+            curr_width_backward = test_backward;
+            test_backward += 1;
         }
 
         if !check_forward && !check_backward {
@@ -274,11 +271,15 @@ fn get_object(
     if curr_width_backward + curr_width_forward < 20 {
         return None;
     }
-    let x_pos = start_x - curr_width_backward;
+    let mut x_pos = 0;
+    if curr_width_backward < start_x {
+        x_pos = start_x - curr_width_backward;
+    }
     let the_width = curr_width_forward  + curr_width_backward ;
 
     let mut height_down:u32 = 0;
     let mut height_up:u32 = 0;
+
 
     let mut step_up:u32 = 5;
     let mut step_down:u32 = 5;
@@ -293,11 +294,11 @@ fn get_object(
         let mut is_up_left = false;
         if (start_x+ x_test) < pixels.width() {
 
-            if (start_y + height_down + step_down + free_down) < pixels.height(){
+            if (start_y + height_down + step_down + free_down) < pixels.height() as u32{
                 let pixel_down_right = pixels[(start_x + x_test, start_y + height_down + step_down + free_down)];
                 is_down_right = check_color(pixel_down_right.0, hue_range, sat_range, light_range);
             }
-            if start_y as i32  - height_up as i32 - step_up as i32  >= 0{
+            if start_y as i32  - height_up as i32 - step_up as i32  >= 0 as i32{
                 let pixel_up_right = pixels[(start_x + x_test, start_y - height_up)];
                 is_up_right = check_color(pixel_up_right.0, hue_range, sat_range, light_range);
             }
@@ -308,7 +309,7 @@ fn get_object(
                 let pixel_down_left = pixels[(start_x - x_test, start_y + height_down + step_down + free_down)];
                 is_down_left = check_color(pixel_down_left.0, hue_range, sat_range, light_range);
             }
-            if start_y as i32 - (height_up as i32 - step_up as i32) as i32 >= 0{
+            if start_y as i32 - height_up as i32 - step_up as i32 >= 0 as i32{
                 let pixel_up_left = pixels[(start_x - x_test, start_y - height_up - step_up)];
                 is_up_left = check_color(pixel_up_left.0, hue_range, sat_range, light_range);
             }
@@ -348,7 +349,7 @@ fn get_object(
                 if  start_y + free_down > pixels.height() {
                     break;
                 }
-                if left_index_x >= 0{
+                if left_index_x >= 0 as i32{
                     let pixel_left = pixels[(start_x - x_test - i, start_y + free_down)];
                     left = check_color(pixel_left.0, hue_range, sat_range, light_range);
                 }
@@ -407,8 +408,8 @@ fn get_object(
     //  }
 
     Some(Rectangle {
-        x_pos,
-        y_pos,
+        x_pos: x_pos,
+        y_pos: y_pos,
         width: the_width as u32,
         height: the_height as u32,
         color,

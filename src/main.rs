@@ -20,10 +20,7 @@ use std::{
 mod image;
 mod position;
 
-pub fn pickup_cube(fd: i32) {
-    let procentage = get_rectangle_pos_procentage();
-    pick_up_from_conveyor_and_place(fd, procentage);
-}
+
 
 pub fn cal(fd: i32) {
     queue::StopExec::send_immediate_command(fd);
@@ -31,7 +28,7 @@ pub fn cal(fd: i32) {
 
     homing::Param::send_queue_command(
         fd,
-        &FloatCustom::new(150.0),
+        &FloatCustom::new(100.0),
         &FloatCustom::new(0.0),
         &FloatCustom::new(20.0),
         &FloatCustom::new(0.0),
@@ -58,12 +55,31 @@ pub fn sort_objects(fd: i32) {
             EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
             image::take_picture();
             let procentage = image::get_rectangle_pos_procentage();
-            position::pick_up_from_conveyor_and_place(fd, procentage);
+            // TODO, get position from ordering
+            position::pick_up_from_conveyor_and_place(fd, procentage, 0, 0);
             return;
             EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
             continue;
         }
     }
+}
+
+pub fn sort_all_objects(fd: i32, mut number:u8) {
+    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+        let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
+        if state == 1 {
+            EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+            image::take_picture();
+            let x = number % 4;
+            let y = number/4;
+            let procentage = image::get_rectangle_pos_procentage();
+            position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
+            number += 1;
+            EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+        }
+        if number < 25{
+            sort_all_objects(fd, number);
+        }
 }
 
 pub fn init(fd: i32) {
@@ -85,8 +101,10 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
-       // init(fd);
-        sort_objects(fd);
+        init(fd);
+        sort_all_objects(fd, 0);
+      // image::take_picture();
+       // get_rectangle_pos_procentage();
         //pickup_cube(fd);
         //  cal(fd);
         //   pickup_cube(fd);
@@ -101,7 +119,6 @@ fn main() {
         //     &FloatCustom::new(0.0),
         // );
         // homing::Cmd::send_queue_command(fd, &0);
-        position::move_to_pos_in_grid(fd, 0, 0);
         let pos = GetPoseR::send_immediate_command(fd).unwrap();
         let x = pos.x.to_float();
         let y = pos.y.to_float();
@@ -116,7 +133,6 @@ fn main() {
         //     thread::sleep(Duration::from_millis(2000));
         //    // let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(100.0), &FloatCustom::new(-170.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
         //     let d_d = ptp::Cmd::send_queue_command(fd, &ptp::PTPMode::MovlXYZ,  &FloatCustom::new(25.0), &FloatCustom::new(-200.0), &FloatCustom::new(20.0), &FloatCustom::new(0.0));
-        queue::StartExec::send_immediate_command(fd);
         // println!("({},{},{}, {})", x, y, pos.z.to_float(), pos.r.to_float());
         // // 120, -85, -30, 0, first row
         // //x, 120 -> 215

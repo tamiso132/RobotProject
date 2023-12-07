@@ -29,6 +29,7 @@ const GRID: [(f32, f32); 24] = [
 (234.20761,117.83956)];
 const lager_z:f32 =  -43.0;
 const BASE_LAGER_POS:(f32, f32, f32) = (200.0, 0.0, 30.0);
+const BASE_PICKUP_POS:(f32, f32, f32) = (96.0, -153.0, 30.0);
 // ];
 
 fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
@@ -42,34 +43,41 @@ fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
     )
 }
 
-pub fn pick_up_from_conveyor_and_place(fd: i32, procentage: f32) {
+pub fn pick_up_from_conveyor_and_place(fd: i32, procentage: f32, x:u8, y:u8) {
     let pos = get_conveyor_y(procentage).unwrap();
 
-    move_robot(fd, pos.0, pos.1, pos.2);
+    go_default_pickup_pos(fd, 0.0);
+    move_robot(fd, pos.0, pos.1, pos.2, 1.0);
 
     SuctionCup::send_immediate_command(fd, &1, &1);
-    println!("Coming to lagret now");
-    move_to_pos_in_grid(fd, 0,0);
-    println!("done with lagret");
+
+
+    go_default_pickup_pos(fd, 1.0);
+    go_default_lager_pos(fd, 0.0);
+    move_to_pos_in_grid(fd, x,y, 1.0);
 
     SuctionCup::send_immediate_command(fd, &0, &0);
-    go_default_lager_pos(fd);
-    return;
+    go_default_lager_pos(fd, 1.0);
 }
-fn go_default_lager_pos(fd:i32){
-    move_robot(fd, FloatCustom::new(BASE_LAGER_POS.0),  FloatCustom::new(BASE_LAGER_POS.1),  FloatCustom::new(BASE_LAGER_POS.2))
+fn go_default_lager_pos(fd:i32, step:f32){
+    move_robot(fd, FloatCustom::new(BASE_LAGER_POS.0),  FloatCustom::new(BASE_LAGER_POS.1),  FloatCustom::new(BASE_LAGER_POS.2), step)
     
 }
-pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8) {
+
+fn go_default_pickup_pos(fd:i32, step:f32){
+    move_robot(fd, FloatCustom::new(BASE_PICKUP_POS.0), FloatCustom::new(BASE_PICKUP_POS.1), FloatCustom::new(BASE_PICKUP_POS.2), step);
+}
+
+pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8, step:f32) {
     let cell = get_cell_pos(x, y);
     //go_default_lager_pos(fd);
-    move_robot(fd, cell.0, cell.1, FloatCustom::new(lager_z));
+    move_robot(fd, cell.0, cell.1, FloatCustom::new(lager_z), step);
     //go_default_lager_pos(fd);
 }
 //X: -4.9768615, Y: -107.649376, Z: 22.339325, R: -92.64702
 
-const RULLBAND_START: (f32, f32, f32, f32) = (-8.235003,-97.1714, 17.1, 0.0);
-const RULLBAND_END: (f32, f32, f32, f32) = (-6.80, -196.0, 17.1, 0.0);
+const RULLBAND_START: (f32, f32, f32, f32) = (-15.55,-95.6714, 17.1, 0.0);
+const RULLBAND_END: (f32, f32, f32, f32) = (-25.50, -195.0, 17.0, 0.0);
 
 //80
 
@@ -83,7 +91,6 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
     let z = FloatCustom::new(RULLBAND_START.2);
     let r = FloatCustom::new(0.0);
 
-    println!("Y: {}", y.to_float());
 
     Some((x, y, z, r))
     // take picture
@@ -93,18 +100,15 @@ fn get_conveyor_y(procentage: f32) -> Option<(FloatCustom, FloatCustom, FloatCus
 // first: X: 127.80598, Y: -99.61005, Z: 62.348213, R: -37.932312
 // second //  X: 48.42568, Y: -167.83894, Z: 95.0106, R: -73.90584
 
-fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom) {
+fn move_robot(fd: i32, x: FloatCustom, y: FloatCustom, z: FloatCustom, step:f32) {
     let pos = GetPoseR::send_immediate_command(fd).unwrap();
 
-    let step = 10.0;
     queue::StopExec::send_immediate_command(fd);
     queue::ClearExec::send_immediate_command(fd);
     let diff_x_step = (pos.x.to_float() - x.to_float()) / (step as f32);
     let diff_y_step = (pos.y.to_float() - y.to_float()) / (step as f32);
     let diff_r_step = pos.r.to_float()/ step as f32;
 
-    //  println("x: {} - {}, {}", pos.x.to_float(), x.to_float());
-    // println("x: {} - {},", pos.y.to_float(), y.to_float());
     for i in 1..(step+1.0) as u32  {
 
        

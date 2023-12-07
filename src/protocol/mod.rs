@@ -107,9 +107,6 @@ macro_rules! response {
                 checksum = u8::overflowing_add(checksum, 1).0;
                 send_packet.push(checksum);
 
-                for e in &send_packet{
-                    println!("{:#02x}", e);
-                }
 
                 const RETURN_PACKET_SIZE:usize = std::mem::size_of::<$struct_name_r>();
 

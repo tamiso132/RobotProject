@@ -17,16 +17,14 @@ use serde_json::json;
 use std::{
     fs::File,
     io::prelude::*,
+    net::{TcpListener, TcpStream},
     process::Command,
     thread::{self, Thread},
     time::Duration,
-    net::{TcpListener, TcpStream},
 };
 
 mod image;
 mod position;
-
-
 
 pub fn cal(fd: i32) {
     queue::StopExec::send_immediate_command(fd);
@@ -70,22 +68,22 @@ pub fn sort_objects(fd: i32) {
     }
 }
 
-pub fn sort_all_objects(fd: i32, mut number:u8) {
+pub fn sort_all_objects(fd: i32, mut number: u8) {
     EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-        let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
-        if state == 1 {
-            EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
-            image::take_picture();
-            let x = number % 4;
-            let y = number/4;
-            let procentage = image::get_rectangle_pos_procentage();
-            position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
-            number += 1;
-            EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-        }
-        if number < 25{
-            sort_all_objects(fd, number);
-        }
+    let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
+    if state == 1 {
+        EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+        image::take_picture();
+        let x = number % 4;
+        let y = number / 4;
+        let procentage = image::get_rectangle_pos_procentage();
+        position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
+        number += 1;
+        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+    }
+    if number < 25 {
+        sort_all_objects(fd, number);
+    }
 }
 
 pub fn init(fd: i32) {
@@ -93,33 +91,30 @@ pub fn init(fd: i32) {
     sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 }
 #[derive(Serialize, Deserialize)]
-struct Position{
-    x:usize,
-    y:usize,
+struct Position {
+    x: usize,
+    y: usize,
 }
 #[derive(Serialize, Deserialize)]
-struct CommandZero{
-    command:u8,
-    order_id:u16,
-    positions:Vec<Position>,
-
+struct CommandZero {
+    command: u8,
+    order_id: u16,
+    positions: Vec<Position>,
 }
 
-pub fn read_request(ss:&str){
-
+pub fn read_request(ss: &str) {
     let f_s = "\"command\":";
-    let get_command = ss[ss.find(f_s).unwrap()+f_s.len()..ss.find(f_s).unwrap()+f_s.len() +1].parse::<u8>().unwrap();
+    let get_command = ss[ss.find(f_s).unwrap() + f_s.len()..ss.find(f_s).unwrap() + f_s.len() + 1]
+        .parse::<u8>()
+        .unwrap();
 
-
-    match get_command{
+    match get_command {
         0 => {
             println!("Command 0");
-            let yep:CommandZero = serde_json::from_str(ss).unwrap();
-        },
-        1 => {
-
-        },
-        _ => {},
+            let yep: CommandZero = serde_json::from_str(ss).unwrap();
+        }
+        1 => {}
+        _ => {}
     }
 }
 
@@ -137,6 +132,7 @@ fn main() {
         // cbinding::bindings::takee_pic(_cptr);
 
         let fd = cbinding::serial_open();
+        //sort_all_objects(fd, 0);
         // let listener = TcpListener::bind("192.168.88.125:7878").unwrap();
         // for stream in listener.incoming(){
         //     let mut s:[u8;4028] = [0;4028];
@@ -146,18 +142,19 @@ fn main() {
         //     let mut ss = &sy[0..read];
         //     read_request(ss);
         // }
-        init(fd);
-     //   position::go_to_order(fd);
-        // sort_all_objects(fd, 0);
-        // image::take_picture();
-       // get_rectangle_pos_procentage();
+        //init(fd);
+        //   position::go_to_order(fd);
+        //image::take_picture();
+        //sort_all_objects(fd, 0);
+
+        image::take_picture();
+
+        image::get_rectangle_pos_procentage();
+
+        // get_rectangle_pos_procentage();
         //pickup_cube(fd);
         //  cal(fd);
         //   pickup_cube(fd);
-
- 
-
-
 
         //        move_to_pos_in_grid(fd, 3, 4);
 
@@ -174,7 +171,7 @@ fn main() {
         let y = pos.y.to_float();
         let z = pos.z.to_float();
         let r = pos.r.to_float();
-// (120.20642, -85.481865, -40.303055, -35.417606)
+        // (120.20642, -85.481865, -40.303055, -35.417606)
         println!("({},{}, {}),", x, y, z);
 
         // // // // for e in &pos.y.hex_float {

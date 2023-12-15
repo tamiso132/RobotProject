@@ -29,6 +29,17 @@ impl Rectangle {
         }
     }
 }
+// let check_yellow = is_color_equal(hsl, (30, 70), (20, 100), (0, 80));
+
+// let check_green = is_color_equal(hsl, (90, 160), (30, 50), (0, 70));
+
+// let check_blue = is_color_equal(hsl, (210, 230), (45, 100), (13, 100));
+
+// let check_red = is_color_equal(hsl, (330, 359), (60, 100), (0, 50));
+const RED_COLOR: [(u16, u16); 3] = [(330, 359), (60, 100), (0, 50)];
+const YELLOW_COLOR: [(u16, u16); 3] = [(30, 70), (35, 100), (25, 80)];
+const BLUE_COLOR: [(u16, u16); 3] = [(210, 230), (40, 100), (5, 100)];
+const GREEN_COLOR: [(u16, u16); 3] = [(90, 160), (25, 50), (0, 70)];
 
 pub fn get_rectangle_pos_procentage() -> f32 {
     // Load the image
@@ -71,7 +82,7 @@ pub fn get_rectangle_pos_procentage() -> f32 {
         for x in 0..pixels.width() {
             let mut in_bound = false;
             for r in &rectangles {
-                if r.in_bound(x as i32, y as i32, 90 as i32) {
+                if r.in_bound(x as i32, y as i32, 0 as i32) {
                     in_bound = true;
                     break;
                 }
@@ -84,40 +95,39 @@ pub fn get_rectangle_pos_procentage() -> f32 {
             let pixel = pixels[(x, y)];
             let hsl = rgb_to_hsl([pixel[0], pixel[1], pixel[2]]);
 
-            let check_yellow = is_color_equal(hsl, (30, 70), (20, 100), (0, 80));
+            let check_yellow =
+                is_color_equal(hsl, YELLOW_COLOR[0], YELLOW_COLOR[1], YELLOW_COLOR[2]);
 
-            let check_green = is_color_equal(hsl, (90, 160), (30, 50), (0, 70));
+            let check_green = is_color_equal(hsl, GREEN_COLOR[0], GREEN_COLOR[1], GREEN_COLOR[2]);
 
-            let check_blue = is_color_equal(hsl, (210, 230), (45, 100), (13, 100));
+            let check_blue = is_color_equal(hsl, BLUE_COLOR[0], BLUE_COLOR[1], BLUE_COLOR[2]);
 
-            let check_red = is_color_equal(hsl, (330, 359), (20, 100), (0, 50));
+            let check_red = is_color_equal(hsl, RED_COLOR[0], RED_COLOR[1], RED_COLOR[2]);
 
             if check_red {
-                // output_img.put_pixel(x, y, pixel);
                 let rectangle = get_object(&pixels, x, y, Colory::Red);
                 if rectangle.is_some() {
                     rectangles.push(rectangle.unwrap());
                     continue;
                 }
-                // } else if check_yellow {
-                //     //  output_img.put_pixel(x, y, pixel);
-                //     let rectangle = get_object(&pixels, x, y, Colory::Yellow);
-                //     if rectangle.is_some() {
-                //         rectangles.push(rectangle.unwrap());
-                //         continue;
-                //     }
-                // } else if check_blue {
-                //     let rectangle = get_object(&pixels, x, y, Colory::Blue);
-                //     if rectangle.is_some() {
-                //         rectangles.push(rectangle.unwrap());
-                //         continue;
-                //     }
-                // } else if check_green {
-                //     let rectangle = get_object(&pixels, x, y, Colory::Green);
-                //     if rectangle.is_some() {
-                //         rectangles.push(rectangle.unwrap());
-                //         continue;
-                //     }
+            } else if check_yellow {
+                let rectangle = get_object(&pixels, x, y, Colory::Yellow);
+                if rectangle.is_some() {
+                    rectangles.push(rectangle.unwrap());
+                    continue;
+                }
+            } else if check_blue {
+                let rectangle = get_object(&pixels, x, y, Colory::Blue);
+                if rectangle.is_some() {
+                    rectangles.push(rectangle.unwrap());
+                    continue;
+                }
+            } else if check_green {
+                let rectangle = get_object(&pixels, x, y, Colory::Green);
+                if rectangle.is_some() {
+                    rectangles.push(rectangle.unwrap());
+                    continue;
+                }
             }
         }
     }
@@ -156,7 +166,7 @@ pub fn get_rectangle_pos_procentage() -> f32 {
     // Save the output image
 }
 
-fn check_color(rgb: [u8; 3], hue: (u16, u16), sat: (u8, u8), light: (u8, u8)) -> bool {
+fn check_color(rgb: [u8; 3], hue: (u16, u16), sat: (u16, u16), light: (u16, u16)) -> bool {
     let hsl = rgb_to_hsl(rgb);
 
     is_color_equal(hsl, hue, sat, light)
@@ -170,9 +180,6 @@ pub enum Colory {
 }
 
 fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> Option<Rectangle> {
-    let mut curr_width_forward = 0;
-    let mut curr_width_backward = 0;
-
     // let mut big_f = 0;
     // let mut big_b = 0;
     let hue_range;
@@ -187,225 +194,117 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
 
     match color {
         Colory::Red => {
-            hue_range = (330, 359);
-            sat_range = (20, 100);
-            light_range = (0, 50);
+            hue_range = RED_COLOR[0];
+            sat_range = RED_COLOR[1];
+            light_range = RED_COLOR[2];
         }
         Colory::Yellow => {
-            hue_range = (45, 65);
-            sat_range = (40, 100);
-            light_range = (0, 60);
+            hue_range = YELLOW_COLOR[0];
+            sat_range = YELLOW_COLOR[1];
+            light_range = YELLOW_COLOR[2];
         }
         Colory::Blue => {
-            hue_range = (200, 240);
-            sat_range = (40, 100);
-            light_range = (10, 50);
+            hue_range = BLUE_COLOR[0];
+            sat_range = BLUE_COLOR[1];
+            light_range = BLUE_COLOR[2];
         }
         Colory::Green => {
-            hue_range = (90, 160);
-            sat_range = (30, 100);
-            light_range = (0, 70);
+            hue_range = GREEN_COLOR[0];
+            sat_range = GREEN_COLOR[1];
+            light_range = GREEN_COLOR[2];
         }
     }
 
-    let mut y_test = start_y;
-
-    let mut test_forward = 1;
-    let mut test_backward = 1;
+    let max_width = pixels.width();
+    let max_height = pixels.height();
+    let mut progress_left = 0;
+    let mut progress_right = 0;
+    let mut current_y = start_y;
     loop {
-        let mut check_forward = false;
-        let mut check_backward = false;
+        let mut color_right = false;
+        let mut color_left = false;
 
-        let forward_index = test_forward + start_x;
-        let backward_index = start_x as i32 - test_backward as i32;
-
-        if forward_index < pixels.width() as u32 {
-            let pixel_forward = pixels[(test_forward + start_x, y_test)];
-            check_forward = check_color(pixel_forward.0, hue_range, sat_range, light_range);
+        let x_to_right = progress_right + start_x;
+        let x_to_left = (start_x as i32) - progress_left;
+        if x_to_right < max_width {
+            let pixel_forward = pixels[(x_to_right, current_y)].0;
+            color_right = check_color(pixel_forward, hue_range, sat_range, light_range);
+            if color_right {
+                progress_right += 1;
+            }
         }
 
-        if backward_index >= 0 as i32 {
-            let pixel_back = pixels[(start_x - test_backward, y_test)];
-            check_backward = check_color(pixel_back.0, hue_range, sat_range, light_range);
+        if x_to_left > 0 {
+            let pixel_backward = pixels[(x_to_left as u32, current_y)].0;
+            color_left = check_color(pixel_backward, hue_range, sat_range, light_range);
+            if color_left {
+                progress_left += 1;
+            }
         }
 
-        if check_forward {
-            curr_width_forward = test_forward;
-            test_forward += 1;
-        }
-        if check_backward {
-            curr_width_backward = test_backward;
-            test_backward += 1;
-        }
+        if !color_left && !color_right {
+            let test = max_height - current_y + 5;
+            let y_test_step;
+            if test <= 0 {
+                y_test_step = 5 + test;
+            } else {
+                y_test_step = 5;
+            }
 
-        if !check_forward && !check_backward {
-            y_test += 1;
             let mut move_down = false;
-            for i in 0..5 {
-                let mut m = false;
-                if y_test + i < pixels.height() {
-                    let pixel_now = pixels[(start_x, y_test + i)];
-                    let hsl_yep = rgb_to_hsl([pixel_now[0], pixel_now[1], pixel_now[2]]);
-                    let m = is_color_equal(hsl_yep, hue_range, sat_range, light_range);
-                } else {
-                    break;
-                }
-                if m == true {
+            for y_step in 1..y_test_step {
+                let color_check = check_color(
+                    pixels[(start_x, y_step + current_y)].0,
+                    hue_range,
+                    sat_range,
+                    light_range,
+                );
+
+                if color_check {
+                    current_y += 1;
                     move_down = true;
                     break;
                 }
             }
-            if move_down {
-            } else {
+            if !move_down {
                 break;
             }
         }
     }
 
-    if curr_width_backward + curr_width_forward < 20 {
-        return None;
-    }
-    let mut x_pos = 0;
-    if curr_width_backward < start_x {
-        x_pos = start_x - curr_width_backward;
-    }
-    let the_width = curr_width_forward + curr_width_backward;
+    let mut height = current_y - start_y;
+    let width = progress_left as u32 + progress_right;
+    let x_start = start_x - progress_left as u32;
+    let y_start = start_y;
 
-    let mut height_down: u32 = 0;
-    let mut height_up: u32 = 0;
-
-    let mut step_up: u32 = 5;
-    let mut step_down: u32 = 5;
-
-    let free_down: u32 = 15;
-
-    let mut x_test: u32 = 0;
-    loop {
-        let mut is_down_right = false;
-        let mut is_up_right = false;
-        let mut is_down_left = false;
-        let mut is_up_left = false;
-        if (start_x + x_test) < pixels.width() {
-            if (start_y + height_down + step_down + free_down) < pixels.height() as u32 {
-                let pixel_down_right = pixels[(
-                    start_x + x_test,
-                    start_y + height_down + step_down + free_down,
-                )];
-                is_down_right = check_color(pixel_down_right.0, hue_range, sat_range, light_range);
-            }
-            if start_y as i32 - height_up as i32 - step_up as i32 >= 0 as i32 {
-                let pixel_up_right = pixels[(start_x + x_test, start_y - height_up)];
-                is_up_right = check_color(pixel_up_right.0, hue_range, sat_range, light_range);
-            }
-        }
-
-        if (start_x as i32 - x_test as i32) >= 0 {
-            if (start_y + height_down + step_down + free_down) < pixels.height() {
-                let pixel_down_left = pixels[(
-                    start_x - x_test,
-                    start_y + height_down + step_down + free_down,
-                )];
-                is_down_left = check_color(pixel_down_left.0, hue_range, sat_range, light_range);
-            }
-            if start_y as i32 - height_up as i32 - step_up as i32 >= 0 as i32 {
-                let pixel_up_left = pixels[(start_x - x_test, start_y - height_up - step_up)];
-                is_up_left = check_color(pixel_up_left.0, hue_range, sat_range, light_range);
-            }
-        }
-
-        if is_up_left || is_up_right {
-            height_up += 5;
-        }
-
-        if is_down_left || is_down_right {
-            height_down += 5;
-        }
-        // let hsl_forward = rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
-        // let hsl_backward = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
-
-        // let check_f = check_color(hsl_forward, hue_range, sat_range, light_range);
-        // let check_b = check_color(hsl_backward, hue_range, sat_range, light_range);
-
-        // if check_f {
-        //     curr_width_forward += 1;
-        // }
-        // if check_b {
-        //     curr_width_backward += 1;
-        // }
-
-        if !is_up_left || !is_up_right || !is_down_left || !is_down_right {
-            x_test += 1;
-            let mut move_left = false;
-            for i in 0..5 {
-                let mut left = false;
-                let mut right = false;
-
-                let mut left_index_x: i32 = (start_x as i32 - x_test as i32 - i as i32);
-                let mut right_index_x: i32 = (start_x + x_test + i) as i32;
-                if start_y + free_down > pixels.height() {
-                    break;
-                }
-                if left_index_x >= 0 as i32 {
-                    let pixel_left = pixels[(start_x - x_test - i, start_y + free_down)];
-                    left = check_color(pixel_left.0, hue_range, sat_range, light_range);
-                }
-
-                if right_index_x < pixels.width() as i32 {
-                    let pixel_right = pixels[(start_x + x_test + i, start_y + free_down)];
-                    right = check_color(pixel_right.0, hue_range, sat_range, light_range)
-                }
-
-                let m = left || right;
-
-                if m == true {
-                    move_left = true;
+    for w in 1..width {
+        if height > pixels.height() {
+            break;
+        } else {
+            loop {
+                if check_color(
+                    pixels[(w + x_start, height + 1)].0,
+                    hue_range,
+                    sat_range,
+                    light_range,
+                ) {
+                    height += 1;
+                } else {
                     break;
                 }
             }
-            if move_left {
-                continue;
-            } else {
-                break;
-            }
         }
     }
-    let y_pos = start_y + 5 - height_up;
 
-    if height_down < 20 {
+    if height < 20 || width < 20 {
         return None;
     }
-
-    let the_height: u32 = height_up + height_down + free_down;
-    // output.put_pixel(x_pos, start_y, Rgb([0, 255, 0]));
-    //    output.save("yepperssss.jpg").unwrap();
-
-    // for i in 0..the_height { // maybe needed, we will see. if my width get wierd.
-    //     loop {
-    //         let pixel_back = pixels[(start_x - curr_width_backward, y_pos + i)];
-    //         let pixel_forward = pixels[(start_x + curr_width_forward, y_pos + i)];
-    //         let hsl_b = rgb_to_hsl([pixel_back[0], pixel_back[1], pixel_back[2]]);
-    //         let hsl_f = rgb_to_hsl([pixel_forward[0], pixel_forward[1], pixel_forward[2]]);
-    //         let check_bb = check_color(hsl_b, hue_range, sat_range, light_range);
-    //         let check_ff = check_color(hsl_f, hue_range, sat_range, light_range);
-
-    //         if check_bb {
-    //             curr_width_backward += 1;
-    //         }
-    //         if check_ff {
-    //             curr_width_forward += 1;
-    //         }
-
-    //         if !check_bb && !check_bb {
-    //             break;
-    //         }
-    //     }
-    //  }
 
     Some(Rectangle {
-        x_pos: x_pos,
-        y_pos: y_pos,
-        width: the_width as u32,
-        height: the_height as u32,
+        x_pos: x_start,
+        y_pos: y_start,
+        width: width,
+        height: height,
         color,
     })
 }
@@ -430,12 +329,12 @@ pub fn take_picture() {
 fn is_color_equal(
     curr_hsl: [f32; 3],
     hue_range: (u16, u16),
-    sat_range: (u8, u8),
-    light_range: (u8, u8),
+    sat_range: (u16, u16),
+    light_range: (u16, u16),
 ) -> bool {
     let curr_hue = curr_hsl[0] as u16;
-    let curr_sat = curr_hsl[1] as u8;
-    let curr_light = curr_hsl[2] as u8;
+    let curr_sat = curr_hsl[1] as u16;
+    let curr_light = curr_hsl[2] as u16;
 
     let is_hue_range = curr_hue >= hue_range.0 && curr_hue <= hue_range.1;
     let is_sat_range = curr_sat >= sat_range.0 && curr_sat <= sat_range.1;

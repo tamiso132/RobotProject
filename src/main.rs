@@ -131,7 +131,7 @@ fn main() {
 
         // cbinding::bindings::takee_pic(_cptr);
 
-        let fd = cbinding::serial_open();
+        //let fd = cbinding::serial_open();
         //sort_all_objects(fd, 0);
         // let listener = TcpListener::bind("192.168.88.125:7878").unwrap();
         // for stream in listener.incoming(){
@@ -147,7 +147,7 @@ fn main() {
         //image::take_picture();
         //sort_all_objects(fd, 0);
 
-        image::take_picture();
+        //image::take_picture();
 
         image::get_rectangle_pos_procentage();
 
@@ -166,13 +166,13 @@ fn main() {
         //     &FloatCustom::new(0.0),
         // );
         // homing::Cmd::send_queue_command(fd, &0);
-        let pos = GetPoseR::send_immediate_command(fd).unwrap();
-        let x = pos.x.to_float();
-        let y = pos.y.to_float();
-        let z = pos.z.to_float();
-        let r = pos.r.to_float();
-        // (120.20642, -85.481865, -40.303055, -35.417606)
-        println!("({},{}, {}),", x, y, z);
+        // let pos = GetPoseR::send_immediate_command(fd).unwrap();
+        // let x = pos.x.to_float();
+        // let y = pos.y.to_float();
+        // let z = pos.z.to_float();
+        // let r = pos.r.to_float();
+        // // (120.20642, -85.481865, -40.303055, -35.417606)
+        // println!("({},{}, {}),", x, y, z);
 
         // // // // for e in &pos.y.hex_float {
         // // // //     println!("hex: Y: {:#02x}", e);
@@ -310,6 +310,6 @@ fn main() {
         //     .current_index
         //     >= last_index
         // {}
-        cbinding::close_port(fd);
+        //cbinding::close_port(fd);
     }
 }

@@ -24,7 +24,9 @@ impl Rectangle {
     fn print_to_screen(&self, image: &mut RgbImage, rgb: Rgb<u8>) {
         for x in self.x_pos..self.width + self.x_pos {
             for y in self.y_pos..self.height + self.y_pos {
-                image.put_pixel(x, y, Rgb([255, 255, 255]));
+                if image.height() > y {
+                    image.put_pixel(x, y, Rgb([255, 255, 255]));
+                }
             }
         }
     }
@@ -37,9 +39,9 @@ impl Rectangle {
 
 // let check_red = is_color_equal(hsl, (330, 359), (60, 100), (0, 50));
 const RED_COLOR: [(u16, u16); 3] = [(330, 359), (60, 100), (0, 50)];
-const YELLOW_COLOR: [(u16, u16); 3] = [(30, 70), (35, 100), (25, 80)];
+const YELLOW_COLOR: [(u16, u16); 3] = [(30, 70), (40, 100), (25, 80)];
 const BLUE_COLOR: [(u16, u16); 3] = [(210, 230), (40, 100), (5, 100)];
-const GREEN_COLOR: [(u16, u16); 3] = [(90, 160), (25, 50), (0, 70)];
+const GREEN_COLOR: [(u16, u16); 3] = [(90, 160), (10, 100), (0, 70)];
 
 pub fn get_rectangle_pos_procentage() -> f32 {
     // Load the image
@@ -58,11 +60,11 @@ pub fn get_rectangle_pos_procentage() -> f32 {
     let width = img.width();
     let height = img.height();
 
-    let start_x = 30;
-    let end_x = img.width() - 10;
+    let start_x = 5;
+    let end_x = img.width();
 
-    let start_y = 250;
-    let end_y = img.height() - 85;
+    let start_y = 130;
+    let end_y = img.height() - 200;
 
     let mut output_img = RgbImage::new(end_x - start_x, end_y - start_y);
 
@@ -74,7 +76,7 @@ pub fn get_rectangle_pos_procentage() -> f32 {
         }
     }
 
-    output_img.save("output.jpg");
+    output_img.save("output.jpg").unwrap();
     let mut pixels = output_img;
     let mut rectangles: Vec<Rectangle> = vec![];
 
@@ -82,7 +84,7 @@ pub fn get_rectangle_pos_procentage() -> f32 {
         for x in 0..pixels.width() {
             let mut in_bound = false;
             for r in &rectangles {
-                if r.in_bound(x as i32, y as i32, 0 as i32) {
+                if r.in_bound(x as i32, y as i32, 10 as i32) {
                     in_bound = true;
                     break;
                 }
@@ -245,8 +247,8 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
         if !color_left && !color_right {
             let test = max_height - current_y + 5;
             let y_test_step;
-            if test <= 0 {
-                y_test_step = 5 + test;
+            if 5 + current_y >= pixels.height() {
+                y_test_step = 2;
             } else {
                 y_test_step = 5;
             }
@@ -272,23 +274,32 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
         }
     }
 
-    let mut height = current_y - start_y;
+    let mut height = if current_y - start_y == 0 {
+        0
+    } else {
+        current_y - start_y - 1
+    };
     let width = progress_left as u32 + progress_right;
     let x_start = start_x - progress_left as u32;
     let y_start = start_y;
 
     for w in 1..width {
-        if height > pixels.height() {
+        if height + 1 >= pixels.height() {
             break;
         } else {
             loop {
                 if check_color(
-                    pixels[(w + x_start, height + 1)].0,
+                    pixels[(w + x_start, height)].0,
                     hue_range,
                     sat_range,
                     light_range,
                 ) {
                     height += 1;
+                    if height >= pixels.height() {
+                        println!("here?");
+                        height -= 2;
+                        break;
+                    }
                 } else {
                     break;
                 }
@@ -311,7 +322,7 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
 pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
         .arg("-o")
-        .arg("/home/tom/projects/RobotProject/src/tyy.jpg")
+        .arg("/home/tom/RobotProject/src/tyy.jpg")
         .arg("--width")
         .arg("500")
         .arg("--height")

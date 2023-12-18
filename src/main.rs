@@ -53,38 +53,34 @@ pub fn cal(fd: i32) {
 
 pub fn sort_objects(fd: i32) {
     EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-    loop {
-        thread::sleep(Duration::from_millis(100));
-        let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
-        if state == 1 {
-            EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
-            image::take_picture();
-            let procentage = image::get_rectangle_pos_procentage();
-            // TODO, get position from ordering
-            position::pick_up_from_conveyor_and_place(fd, procentage, 0, 0);
-            EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-            continue;
-        }
+    let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
+    if state == 1 {
+        EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+        image::take_picture();
+        let procentage = image::get_rectangle_pos_procentage();
+        // TODO, get position from ordering
+        position::pick_up_from_conveyor_and_place(fd, procentage, 0, 0);
+        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
     }
 }
 
-// pub fn sort_all_objects(fd: i32, mut number: u8) {
-//     EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-//     let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
-//     if state == 1 {
-//         EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
-//         image::take_picture();
-//         let x = number % 4;
-//         let y = number / 4;
-//         let procentage = image::get_rectangle_pos_procentage();
-//         position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
-//         number += 1;
-//         EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-//     }
-//     if number < 25 {
-//         sort_all_objects(fd, number);
-//     }
-// }
+pub fn sort_all_objects(fd: i32, mut number: u8) {
+    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+    let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
+    if state == 1 {
+        EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
+        image::take_picture();
+        let x = number % 4;
+        let y = number / 4;
+        let procentage = image::get_rectangle_pos_procentage();
+        position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
+        number += 1;
+        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+    }
+    if number < 25 {
+        sort_all_objects(fd, number);
+    }
+}
 
 pub fn init(fd: i32) {
     cal(fd);
@@ -104,23 +100,54 @@ struct CommandZero {
 
 pub fn read_request(ss: &str) {}
 
+#[derive(Clone, Copy)]
 enum RobotMode {
     SortMode,
     OrderMode,
 }
 
-// 3280x2464 pixels
+fn robot_work(fd: i32, robot_mode: Arc<Mutex<RobotMode>>) {
+    if *robot_mode.lock().unwrap() as u8 == RobotMode::SortMode as u8 {
+        sort_objects(fd);
+    } else {
+        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
+        // do order
+    }
+}
+
+fn read_from_ordering(
+    stream: Arc<Mutex<std::net::TcpStream>>,
+    orders: Arc<Mutex<Option<CommandZero>>>,
+) {
+    loop {
+        let mut buffer = String::new();
+        stream.lock().unwrap().read_to_string(&mut buffer);
+        if !buffer.is_empty() {
+            
+        }
+    }
+}
+
+const IP_ADRESS: &str = "PLACEHOLDER";
+
 fn main() {
     unsafe {
         let robot_mode = Arc::new(Mutex::new(RobotMode::SortMode));
         let order: Arc<Mutex<Option<CommandZero>>> = Arc::new(Mutex::new(None));
+        let mut stream = TcpStream::connect(IP_ADRESS).unwrap();
+        stream.set_nonblocking(true);
+
+        let stream: Arc<Mutex<std::net::TcpStream>> = Arc::new(Mutex::new(stream));
 
         let fd = cbinding::serial_open();
-
-        sort_objects(fd);
-
+        println!("does it come here?");
+        // init(fd);
+        image::take_picture();
         image::get_rectangle_pos_procentage();
+        sort_all_objects(fd, 0);
 
-        //cbinding::close_port(fd);
+        robot_work(fd, robot_mode);
+
+        cbinding::close_port(fd);
     }
 }

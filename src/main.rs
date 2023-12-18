@@ -53,7 +53,11 @@ pub fn cal(fd: i32) {
     println!("done");
 }
 
-pub fn sort_objects(fd: i32, stream: Arc<Mutex<TcpStream>>) {
+pub fn sort_objects(
+    fd: i32,
+    stream: Arc<Mutex<TcpStream>>,
+    sort_info: Arc<Mutex<Option<PositionWithColor>>>,
+) {
     EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
     let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
     if state == 1 {
@@ -62,27 +66,27 @@ pub fn sort_objects(fd: i32, stream: Arc<Mutex<TcpStream>>) {
         let procentage = image::get_rectangle_pos_procentage();
         // TODO, get position from ordering
         ordering::send_sort_request(stream, procentage.1);
-        loop {}
-        position::pick_up_from_conveyor_and_place(fd, procentage, 0, 0);
-        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-    }
-}
-
-pub fn sort_all_objects(fd: i32, mut number: u8) {
-    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-    let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
-    if state == 1 {
-        EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
-        image::take_picture();
-        let x = number % 4;
-        let y = number / 4;
-        let procentage = image::get_rectangle_pos_procentage();
-        position::pick_up_from_conveyor_and_place(fd, procentage, x, y);
-        number += 1;
-        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
-    }
-    if number < 25 {
-        sort_all_objects(fd, number);
+        let pos_color;
+        loop {
+            if sort_info.lock().unwrap().is_some() {
+                pos_color = sort_info.lock().unwrap().clone().unwrap();
+                *sort_info.lock().unwrap() = None;
+                break;
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+        position::pick_up_from_conveyor_and_place(
+            fd,
+            procentage.0,
+            pos_color.position_x,
+            pos_color.position_y,
+        );
+        ordering::send_sort_confirm(
+            pos_color.position_x,
+            pos_color.position_y,
+            pos_color.product_type_id,
+        );
+        EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(10000));
     }
 }
 
@@ -92,34 +96,34 @@ pub fn init(fd: i32) {
 }
 #[derive(Serialize, Deserialize, Clone)]
 struct Position {
-    x: usize,
-    y: usize,
+    position_x: usize,
+    position_y: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct PositionWithColor {
-    x: usize,
-    y: usize,
-    color: u8,
+    pub position_x: usize,
+    pub position_y: usize,
+    pub product_type_id: u8,
 }
 
 pub fn read_request(ss: &str) {}
 
-#[derive(Clone, Copy)]
-enum RobotMode {
-    SortMode,
-    OrderMode,
-}
-
-fn robot_work(fd: i32, stream: Arc<Mutex<TcpStream>>, order: Arc<Mutex<Option<Order>>>) {
+fn robot_work(
+    fd: i32,
+    stream: Arc<Mutex<TcpStream>>,
+    order: Arc<Mutex<Option<Order>>>,
+    sort_info: Arc<Mutex<Option<PositionWithColor>>>,
+) {
     if order.lock().unwrap().is_none() {
-        sort_objects(fd, stream);
+        sort_objects(fd, stream, sort_info);
     } else {
         EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
         let order_ = order.lock().unwrap().clone();
         *order.lock().unwrap() = None;
         let order_ = order_.unwrap();
-        do_order(fd, order_.positions, order_.order_id as usize);
+        do_order(fd, order_.positions.clone(), order_.order_id as usize);
+        ordering::send_order_finished(order_, stream);
     }
 }
 
@@ -127,41 +131,36 @@ const IP_ADRESS_ORDER: &str = "192.168.88.71";
 
 fn main() {
     unsafe {
-        let order: Arc<Mutex<Option<Order>>> = Arc::new(Mutex::new(None));
-        let sort_position: Arc<Mutex<Option<Position>>> = Arc::new(Mutex::new(None));
-
-        let mut stream = TcpStream::connect(IP_ADRESS_ORDER).unwrap();
+        let stream = TcpStream::connect(IP_ADRESS_ORDER).unwrap();
         stream.set_nonblocking(true).unwrap();
 
+        //Thread safe variables
+        let order: Arc<Mutex<Option<Order>>> = Arc::new(Mutex::new(None));
+        let sort_info: Arc<Mutex<Option<(usize, usize, u8)>>> = Arc::new(Mutex::new(None));
+        let sort_position: Arc<Mutex<Option<PositionWithColor>>> = Arc::new(Mutex::new(None));
+        let data = Arc::new(Mutex::new(cbinding::serial_open()));
         let stream: Arc<Mutex<std::net::TcpStream>> = Arc::new(Mutex::new(stream));
 
-        robot_work(fd, stream, order);
+        // Cloned Thread Safe
+        let cloned_data = Arc::clone(&data);
+        let cloned_sort = Arc::clone(&sort_info);
+        let cloned_stream = Arc::clone(&stream);
+        let cloned_order = Arc::clone(&order);
 
-        let fd = cbinding::serial_open();
-        let sort_info: Arc<Mutex<Option<(u8, u8, u8)>>> = Arc::new(Mutex::new(None));
-        //init(fd);
-        let pos = vec![
-            Position { x: 0, y: 2 },
-            Position { x: 1, y: 2 },
-            Position { x: 2, y: 2 },
-            Position { x: 3, y: 2 },
-        ];
-        //init(fd);
-        // robot_work(fd, order.clone());
-        // ordering::read_ordering(stream, order.clone(), sort_position.clone());
-        // // init(fd);
-        // // image::take_picture();
-        // // image::get_rectangle_pos_procentage();
-        // sort_all_objects(fd, 0);
+        std::thread::spawn(move || ordering::read_ordering(stream, order, cloned_sort));
 
-        let pos = GetPoseR::send_immediate_command(fd).unwrap();
+        std::thread::spawn(move || {
+            let fd = cloned_data.lock().unwrap().clone();
+            init(fd);
+            robot_work(
+                fd.clone(),
+                cloned_stream,
+                cloned_order,
+                sort_position.clone(),
+            );
+        });
 
-        let x = pos.x.to_float();
-        let y = pos.y.to_float();
-        let z = pos.z.to_float();
-
-        println!("X: {}, Y: {}, Z: {}", x, y, z);
-
-        cbinding::close_port(fd);
+        loop {}
+        cbinding::close_port(*data.lock().unwrap());
     }
 }

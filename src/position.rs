@@ -2,7 +2,7 @@ use std::{thread, time::Duration};
 
 use robotproject::protocol::{ptp, queue, FloatCustom, GetPoseR, SuctionCup};
 
-use crate::Position;
+use crate::{Position, PositionWithColor};
 
 const GRID: [(f32, f32); 24] = [
     (132.8116, -42.881817),
@@ -44,7 +44,7 @@ const ORDER_Z: f32 = 30.0;
 
 pub fn do_order(fd: i32, positions: Vec<Position>, order_place: usize) {
     for pos in positions {
-        move_to_pos_in_grid(fd, pos.x as u8, pos.y as u8, 1.0);
+        move_to_pos_in_grid(fd, pos.position_x, pos.position_y, 1.0);
         SuctionCup::send_immediate_command(fd, &1, &1);
         go_default_lager_pos(fd, 2.0);
 
@@ -63,7 +63,7 @@ pub fn do_order(fd: i32, positions: Vec<Position>, order_place: usize) {
     }
 }
 
-fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
+fn get_cell_pos(x: usize, y: usize) -> (FloatCustom, FloatCustom) {
     let index = (y * 4 + x);
 
     let cell = GRID[index as usize];
@@ -71,7 +71,7 @@ fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
     (FloatCustom::new(cell.0), FloatCustom::new(cell.1))
 }
 
-pub fn pick_up_from_conveyor_and_place(fd: i32, procentage: f32, x: u8, y: u8) {
+pub fn pick_up_from_conveyor_and_place(fd: i32, procentage: f32, x: usize, y: usize) {
     let pos = get_conveyor_y(procentage).unwrap();
 
     go_default_pickup_pos(fd, 0.0);
@@ -114,7 +114,7 @@ fn go_default_pickup_pos(fd: i32, step: f32) {
     );
 }
 
-pub fn move_to_pos_in_grid(fd: i32, x: u8, y: u8, step: f32) {
+pub fn move_to_pos_in_grid(fd: i32, x: usize, y: usize, step: f32) {
     let cell = get_cell_pos(x, y);
     //go_default_lager_pos(fd);
     move_robot(fd, cell.0, cell.1, FloatCustom::new(lager_z), step);

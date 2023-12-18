@@ -1,5 +1,7 @@
 use std::{
     io::{Read, Write},
+    net::TcpStream,
+    os::unix::thread,
     sync::{Arc, Mutex},
 };
 
@@ -11,13 +13,13 @@ use crate::{image::Colory, Position, PositionWithColor};
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Order {
     pub order_id: u64,
-    pub positions: Vec<PositionWithColor>,
+    pub positions: Vec<Position>,
 }
 
 pub fn read_ordering(
     stream: Arc<Mutex<std::net::TcpStream>>,
     order: Arc<Mutex<Option<Order>>>,
-    sort_info: Arc<Mutex<Option<(u8, u8, u8)>>>,
+    sort_info: Arc<Mutex<Option<(usize, usize, u8)>>>,
 ) {
     let mut buffer = String::new();
 
@@ -42,7 +44,7 @@ pub fn read_ordering(
                 let x = s["x"].as_u64().unwrap();
                 let y = s["y"].as_u64().unwrap();
                 let color = s["color"].as_u64().unwrap();
-                *sort_info.lock().unwrap() = Some((x as u8, y as u8, color as u8));
+                *sort_info.lock().unwrap() = Some((x as usize, y as usize, color as u8));
             }
             _ => {
                 panic!("should not come here");
@@ -59,6 +61,11 @@ pub fn send_sort_request(stream: Arc<Mutex<std::net::TcpStream>>, color: Colory)
     stream.lock().unwrap().write(json.to_string().as_bytes());
 }
 
-pub fn send_order_finished(order_to_send: Order) {}
+pub fn send_order_finished(order_to_send: Order, stream: Arc<Mutex<TcpStream>>) {
+    let json = json!({ "order_id": order_to_send.order_id, "positions": order_to_send.positions});
+    stream.lock().unwrap().write(json.to_string().as_bytes());
+}
 
-pub fn send_sort_confirm() {}
+pub fn send_sort_confirm(x: usize, y: usize, color: u8) {
+    let d = json!({"command": "sort_confirm", "x": x, "y": y, "color": color});
+}

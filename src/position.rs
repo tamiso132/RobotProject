@@ -2,6 +2,8 @@ use std::{thread, time::Duration};
 
 use robotproject::protocol::{ptp, queue, FloatCustom, GetPoseR, SuctionCup};
 
+use crate::Position;
+
 const GRID: [(f32, f32); 24] = [
     (132.8116, -42.881817),
     (178.25412, -47.52761),
@@ -28,38 +30,37 @@ const GRID: [(f32, f32); 24] = [
     (194.92029, 116.61683),
     (234.20761, 117.83956),
 ];
-const lager_z: f32 = -43.0;
+const lager_z: f32 = -45.0;
 const BASE_LAGER_POS: (f32, f32, f32) = (200.0, 0.0, 30.0);
 const BASE_PICKUP_POS: (f32, f32, f32) = (96.0, -153.0, 40.0);
+const BASE_ORDER_POS: (f32, f32, f32) = (121.0, 143.0, 30.0);
 // ];
 // 51, 146, 175
 // -20, 155, 175
 // -120, 161, 175
 
-const ORDER_GRID: [(f32, f32); 3] = [(51.0, 146.0), (-20.0, 155.0), (-120.0, 161.0)];
-const ORDER_Z: f32 = 175.0;
+const ORDER_GRID: [(f32, f32); 2] = [(23.5, 140.0), (-20.0, 155.0)];
+const ORDER_Z: f32 = 30.0;
 
-pub fn go_to_order(fd: i32) {
-    let pos = GetPoseR::send_immediate_command(fd).unwrap();
-    let x = pos.x.to_float();
-    let y = pos.y.to_float();
-    let z = pos.z.to_float();
-    let r = pos.r.to_float();
-    println!("yeppers");
-    move_robot(
-        fd,
-        FloatCustom::new(140.0),
-        FloatCustom::new(3.0),
-        FloatCustom::new(150.0),
-        10.0,
-    );
-    move_robot(
-        fd,
-        FloatCustom::new(ORDER_GRID[0].0),
-        FloatCustom::new(ORDER_GRID[0].0),
-        FloatCustom::new(ORDER_Z),
-        10.0,
-    );
+pub fn do_order(fd: i32, positions: Vec<Position>, order_place: usize) {
+    for pos in positions {
+        move_to_pos_in_grid(fd, pos.x as u8, pos.y as u8, 1.0);
+        SuctionCup::send_immediate_command(fd, &1, &1);
+        go_default_lager_pos(fd, 2.0);
+
+        go_default_order_pos(fd, 1.0);
+
+        move_robot(
+            fd,
+            FloatCustom::new(ORDER_GRID[order_place].0),
+            FloatCustom::new(ORDER_GRID[order_place].1),
+            FloatCustom::new(ORDER_Z),
+            2.0,
+        );
+        SuctionCup::send_immediate_command(fd, &0, &0);
+        go_default_order_pos(fd, 2.0);
+        go_default_lager_pos(fd, 1.0);
+    }
 }
 
 fn get_cell_pos(x: u8, y: u8) -> (FloatCustom, FloatCustom) {
@@ -94,7 +95,15 @@ fn go_default_lager_pos(fd: i32, step: f32) {
         step,
     )
 }
-
+fn go_default_order_pos(fd: i32, step: f32) {
+    move_robot(
+        fd,
+        FloatCustom::new(BASE_ORDER_POS.0),
+        FloatCustom::new(BASE_ORDER_POS.1),
+        FloatCustom::new(BASE_ORDER_POS.2),
+        step,
+    )
+}
 fn go_default_pickup_pos(fd: i32, step: f32) {
     move_robot(
         fd,

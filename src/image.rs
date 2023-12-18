@@ -43,7 +43,7 @@ const YELLOW_COLOR: [(u16, u16); 3] = [(30, 70), (40, 100), (25, 80)];
 const BLUE_COLOR: [(u16, u16); 3] = [(210, 230), (40, 100), (5, 100)];
 const GREEN_COLOR: [(u16, u16); 3] = [(90, 160), (10, 100), (0, 70)];
 
-pub fn get_rectangle_pos_procentage() -> f32 {
+pub fn get_rectangle_pos_procentage() -> (f32, Colory) {
     // Load the image
     let img = image::open("src/tyy.jpg").expect("Failed to open image");
 
@@ -164,7 +164,7 @@ pub fn get_rectangle_pos_procentage() -> f32 {
         panic!("{}, {}, {}", täljare, procentage_x, img_width);
     }
     //pixels.save("hello.jpg");
-    procentage_x
+    (procentage_x, rec_check.color)
     // Save the output image
 }
 

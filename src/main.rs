@@ -65,7 +65,7 @@ pub fn sort_objects(
         image::take_picture();
         let procentage = image::get_rectangle_pos_procentage();
         // TODO, get position from ordering
-        ordering::send_sort_request(stream, procentage.1);
+        ordering::send_sort_request(stream.clone(), procentage.1);
         let pos_color;
         loop {
             if sort_info.lock().unwrap().is_some() {
@@ -85,6 +85,7 @@ pub fn sort_objects(
             pos_color.position_x,
             pos_color.position_y,
             pos_color.product_type_id,
+            stream.clone(),
         );
         EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(10000));
     }
@@ -101,29 +102,32 @@ struct Position {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-struct PositionWithColor {
+pub struct PositionWithColor {
     pub position_x: usize,
     pub position_y: usize,
     pub product_type_id: u8,
 }
-
-pub fn read_request(ss: &str) {}
 
 fn robot_work(
     fd: i32,
     stream: Arc<Mutex<TcpStream>>,
     order: Arc<Mutex<Option<Order>>>,
     sort_info: Arc<Mutex<Option<PositionWithColor>>>,
+    start: Arc<Mutex<bool>>,
 ) {
-    if order.lock().unwrap().is_none() {
-        sort_objects(fd, stream, sort_info);
+    if *start.lock().unwrap() {
+        if order.lock().unwrap().is_none() {
+            sort_objects(fd, stream, sort_info);
+        } else {
+            EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
+            let order_ = order.lock().unwrap().clone();
+            *order.lock().unwrap() = None;
+            let order_ = order_.unwrap();
+            do_order(fd, order_.positions.clone(), order_.order_id as usize);
+            ordering::send_order_finished(order_, stream);
+        }
     } else {
-        EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
-        let order_ = order.lock().unwrap().clone();
-        *order.lock().unwrap() = None;
-        let order_ = order_.unwrap();
-        do_order(fd, order_.positions.clone(), order_.order_id as usize);
-        ordering::send_order_finished(order_, stream);
+        thread::sleep(Duration::from_millis(100));
     }
 }
 
@@ -140,14 +144,18 @@ fn main() {
         let sort_position: Arc<Mutex<Option<PositionWithColor>>> = Arc::new(Mutex::new(None));
         let data = Arc::new(Mutex::new(cbinding::serial_open()));
         let stream: Arc<Mutex<std::net::TcpStream>> = Arc::new(Mutex::new(stream));
+        let start = Arc::new(Mutex::new(false));
 
         // Cloned Thread Safe
         let cloned_data = Arc::clone(&data);
         let cloned_sort = Arc::clone(&sort_info);
         let cloned_stream = Arc::clone(&stream);
         let cloned_order = Arc::clone(&order);
+        let cloned_start = Arc::clone(&start);
 
-        std::thread::spawn(move || ordering::read_ordering(stream, order, cloned_sort));
+        std::thread::spawn(move || {
+            ordering::read_ordering(stream, order, cloned_sort, cloned_start)
+        });
 
         std::thread::spawn(move || {
             let fd = cloned_data.lock().unwrap().clone();
@@ -157,6 +165,7 @@ fn main() {
                 cloned_stream,
                 cloned_order,
                 sort_position.clone(),
+                start,
             );
         });
 

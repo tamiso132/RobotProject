@@ -20,6 +20,7 @@ pub fn read_ordering(
     stream: Arc<Mutex<std::net::TcpStream>>,
     order: Arc<Mutex<Option<Order>>>,
     sort_info: Arc<Mutex<Option<(usize, usize, u8)>>>,
+    start: Arc<Mutex<bool>>,
 ) {
     let mut buffer = String::new();
 
@@ -46,6 +47,12 @@ pub fn read_ordering(
                 let color = s["color"].as_u64().unwrap();
                 *sort_info.lock().unwrap() = Some((x as usize, y as usize, color as u8));
             }
+            "stop" => {
+                *start.lock().unwrap() = false;
+            }
+            "start" => {
+                *start.lock().unwrap() = true;
+            }
             _ => {
                 panic!("should not come here");
             }
@@ -66,6 +73,7 @@ pub fn send_order_finished(order_to_send: Order, stream: Arc<Mutex<TcpStream>>) 
     stream.lock().unwrap().write(json.to_string().as_bytes());
 }
 
-pub fn send_sort_confirm(x: usize, y: usize, color: u8) {
-    let d = json!({"command": "sort_confirm", "x": x, "y": y, "color": color});
+pub fn send_sort_confirm(x: usize, y: usize, color: u8, stream: Arc<Mutex<TcpStream>>) {
+    let json = json!({"command": "sort_confirm", "x": x, "y": y, "color": color});
+    stream.lock().unwrap().write(json.to_string().as_bytes());
 }

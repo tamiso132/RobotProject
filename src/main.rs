@@ -15,6 +15,7 @@ use robotproject::{
 use serde_derive::{Deserialize, Serialize};
 use serde_json::json;
 
+use core::panic;
 use std::{
     fs::File,
     io::prelude::*,
@@ -24,6 +25,8 @@ use std::{
     thread::{self, Thread},
     time::Duration,
 };
+
+use crate::image::take_picture;
 
 mod image;
 mod ordering;
@@ -56,7 +59,7 @@ pub fn cal(fd: i32) {
 pub fn sort_objects(
     fd: i32,
     stream: Arc<Mutex<TcpStream>>,
-    sort_info: Arc<Mutex<Option<PositionWithColor>>>,
+    sort_info: Arc<Mutex<Option<(usize, usize, u8)>>>,
 ) {
     EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
     let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
@@ -73,20 +76,11 @@ pub fn sort_objects(
                 *sort_info.lock().unwrap() = None;
                 break;
             }
+            println!("it is waiting for value");
             thread::sleep(Duration::from_millis(100));
         }
-        position::pick_up_from_conveyor_and_place(
-            fd,
-            procentage.0,
-            pos_color.position_x,
-            pos_color.position_y,
-        );
-        ordering::send_sort_confirm(
-            pos_color.position_x,
-            pos_color.position_y,
-            pos_color.product_type_id,
-            stream.clone(),
-        );
+        position::pick_up_from_conveyor_and_place(fd, procentage.0, pos_color.0, pos_color.1);
+        ordering::send_sort_confirm(pos_color.0, pos_color.1, pos_color.2, stream.clone());
         EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(10000));
     }
 }
@@ -112,30 +106,32 @@ fn robot_work(
     fd: i32,
     stream: Arc<Mutex<TcpStream>>,
     order: Arc<Mutex<Option<Order>>>,
-    sort_info: Arc<Mutex<Option<PositionWithColor>>>,
+    sort_info: Arc<Mutex<Option<(usize, usize, u8)>>>,
     start: Arc<Mutex<bool>>,
 ) {
-    if *start.lock().unwrap() {
-        if order.lock().unwrap().is_none() {
-            sort_objects(fd, stream, sort_info);
+    loop {
+        if *start.lock().unwrap() {
+            if order.lock().unwrap().is_none() {
+                sort_objects(fd, stream.clone(), sort_info.clone());
+            } else {
+                EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
+                let order_ = order.lock().unwrap().clone();
+                *order.lock().unwrap() = None;
+                let order_ = order_.unwrap();
+                do_order(fd, order_.positions.clone(), order_.order_id as usize);
+                ordering::send_order_finished(order_, stream.clone());
+            }
         } else {
             EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
-            let order_ = order.lock().unwrap().clone();
-            *order.lock().unwrap() = None;
-            let order_ = order_.unwrap();
-            do_order(fd, order_.positions.clone(), order_.order_id as usize);
-            ordering::send_order_finished(order_, stream);
+            thread::sleep(Duration::from_millis(100));
         }
-    } else {
-        thread::sleep(Duration::from_millis(100));
     }
 }
 
-const IP_ADRESS_ORDER: &str = "192.168.88.71";
-
 fn main() {
     unsafe {
-        let stream = TcpStream::connect(IP_ADRESS_ORDER).unwrap();
+        let stream = TcpListener::bind("192.168.88.222:12000").unwrap();
+        let stream = stream.accept().unwrap().0;
         stream.set_nonblocking(true).unwrap();
 
         //Thread safe variables
@@ -144,17 +140,19 @@ fn main() {
         let sort_position: Arc<Mutex<Option<PositionWithColor>>> = Arc::new(Mutex::new(None));
         let data = Arc::new(Mutex::new(cbinding::serial_open()));
         let stream: Arc<Mutex<std::net::TcpStream>> = Arc::new(Mutex::new(stream));
-        let start = Arc::new(Mutex::new(false));
+        let start = Arc::new(Mutex::new(true));
 
         // Cloned Thread Safe
         let cloned_data = Arc::clone(&data);
         let cloned_sort = Arc::clone(&sort_info);
+        let cloned_sort_2 = Arc::clone(&sort_info);
         let cloned_stream = Arc::clone(&stream);
+        let cloned_stream_2 = Arc::clone(&stream);
         let cloned_order = Arc::clone(&order);
         let cloned_start = Arc::clone(&start);
 
         std::thread::spawn(move || {
-            ordering::read_ordering(stream, order, cloned_sort, cloned_start)
+            ordering::read_ordering(cloned_stream_2, order, cloned_sort, cloned_start)
         });
 
         std::thread::spawn(move || {
@@ -164,7 +162,7 @@ fn main() {
                 fd.clone(),
                 cloned_stream,
                 cloned_order,
-                sort_position.clone(),
+                cloned_sort_2,
                 start,
             );
         });

@@ -322,7 +322,7 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
 pub fn take_picture() {
     let output = Command::new("libcamera-jpeg")
         .arg("-o")
-        .arg("/home/tom/RobotProject/src/tyy.jpg")
+        .arg("/home/tom/projects/RobotProject/src/tyy.jpg")
         .arg("--width")
         .arg("500")
         .arg("--height")

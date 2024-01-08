@@ -122,8 +122,8 @@ pub fn move_to_pos_in_grid(fd: i32, x: usize, y: usize, step: f32) {
 }
 //X: -4.9768615, Y: -107.649376, Z: 22.339325, R: -92.64702
 
-const RULLBAND_START: (f32, f32, f32, f32) = (0.0, -85.0, 17.1, 0.0);
-const RULLBAND_END: (f32, f32, f32, f32) = (0.0, -192.0, 17.0, 0.0);
+const RULLBAND_START: (f32, f32, f32, f32) = (0.0, -93.0, 17.0, 0.0);
+const RULLBAND_END: (f32, f32, f32, f32) = (0.0, -190.0, 17.0, 0.0);
 
 //80
 

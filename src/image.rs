@@ -60,11 +60,11 @@ pub fn get_rectangle_pos_procentage() -> (f32, Colory) {
     let width = img.width();
     let height = img.height();
 
-    let start_x = 5;
-    let end_x = img.width();
+    let start_x = 25;
+    let end_x = img.width() - 42;
 
     let start_y = 130;
-    let end_y = img.height() - 200;
+    let end_y = img.height() - 205;
 
     let mut output_img = RgbImage::new(end_x - start_x, end_y - start_y);
 
@@ -144,7 +144,7 @@ pub fn get_rectangle_pos_procentage() -> (f32, Colory) {
     println!("Len: {}", &rectangles.len());
     for r in rectangles {
         let current_height_rect = r.y_pos + r.height;
-        r.print_to_screen(&mut pixels, white);
+        // r.print_to_screen(&mut pixels, white);
         println!(
             "X: {}, Y: {}, Width: {}, Height {},  Color, {:?}",
             r.x_pos, r.y_pos, r.height, r.width, r.color
@@ -155,7 +155,7 @@ pub fn get_rectangle_pos_procentage() -> (f32, Colory) {
         }
     }
 
-    pixels.save("path.jpg");
+    pixels.save("path.jpg").unwrap();
 
     let img_width = end_x - start_x;
     let täljare = (rec_check.x_pos) as f32 + (rec_check.width as f32 / 2.0) as f32;
@@ -255,6 +255,10 @@ fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> O
 
             let mut move_down = false;
             for y_step in 1..y_test_step {
+                if (y_step + current_y) >= pixels.height() {
+                    move_down = false;
+                    break;
+                }
                 let color_check = check_color(
                     pixels[(start_x, y_step + current_y)].0,
                     hue_range,

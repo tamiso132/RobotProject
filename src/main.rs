@@ -61,13 +61,12 @@ pub fn sort_objects(
     stream: Arc<Mutex<TcpStream>>,
     sort_info: Arc<Mutex<Option<(usize, usize, u8)>>>,
 ) {
-    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(10000));
+    EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(5000)); // TODO change to 10k
     let state = sensor::get_infrared_state(fd, Port::GP2 as u8);
     if state == 1 {
         EMotor::send_immediate_command(fd, &0, &0, &IntCustom::new(0));
         image::take_picture();
         let procentage = image::get_rectangle_pos_procentage();
-        // TODO, get position from ordering
         ordering::send_sort_request(stream.clone(), procentage.1);
         let pos_color;
         loop {
@@ -86,7 +85,7 @@ pub fn sort_objects(
 }
 
 pub fn init(fd: i32) {
-    cal(fd);
+    // cal(fd);
     sensor::set_infrared_immediate(fd, 1, sensor::Port::GP4);
 }
 #[derive(Serialize, Deserialize, Clone)]
@@ -114,11 +113,12 @@ fn robot_work(
             if order.lock().unwrap().is_none() {
                 sort_objects(fd, stream.clone(), sort_info.clone());
             } else {
+                println!("ORDER TIME ");
                 EMotor::send_immediate_command(fd, &0, &1, &IntCustom::new(0));
                 let order_ = order.lock().unwrap().clone();
                 *order.lock().unwrap() = None;
                 let order_ = order_.unwrap();
-                do_order(fd, order_.positions.clone(), order_.order_id as usize);
+                do_order(fd, order_.positions.clone(), (order_.order_id % 2) as usize);
                 ordering::send_order_finished(order_, stream.clone());
             }
         } else {
@@ -130,6 +130,17 @@ fn robot_work(
 
 fn main() {
     unsafe {
+        //take_picture();
+        //get_rectangle_pos_procentage();
+        // panic!();
+        // let fd = cbinding::serial_open();
+        // //init(fd);
+        // let pos = GetPoseR::send_immediate_command(fd).unwrap();
+        // let x = pos.x.to_float();
+        // let y = pos.y.to_float();
+        // let z = pos.z.to_float();
+        // println!("X: {}\nY: {}\nZ: {}", x, y, z);
+        // ptp::Cmd::send_immediate_command(fd, &ptp::PTPMode::MovlXYZ, &FloatCustom::new(0.0),&FloatCustom::new(-94.0), &FloatCustom::new(17.0), &FloatCustom::new(0.0));
         let stream = TcpListener::bind("192.168.88.222:12000").unwrap();
         let stream = stream.accept().unwrap().0;
         stream.set_nonblocking(true).unwrap();
@@ -137,7 +148,7 @@ fn main() {
         //Thread safe variables
         let order: Arc<Mutex<Option<Order>>> = Arc::new(Mutex::new(None));
         let sort_info: Arc<Mutex<Option<(usize, usize, u8)>>> = Arc::new(Mutex::new(None));
-        let sort_position: Arc<Mutex<Option<PositionWithColor>>> = Arc::new(Mutex::new(None));
+        //let sort_position: Arc<Mutex<Option<PositionWithColor>>> = Arc::new(Mutex::new(None));
         let data = Arc::new(Mutex::new(cbinding::serial_open()));
         let stream: Arc<Mutex<std::net::TcpStream>> = Arc::new(Mutex::new(stream));
         let start = Arc::new(Mutex::new(true));
@@ -168,6 +179,5 @@ fn main() {
         });
 
         loop {}
-        cbinding::close_port(*data.lock().unwrap());
     }
 }

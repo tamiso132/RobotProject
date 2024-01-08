@@ -40,10 +40,12 @@ pub fn read_ordering(
                 let order_id = s["order-id"].to_string().parse::<u64>().unwrap();
                 let positions: Vec<Position> =
                     serde_json::from_str(&s["positions"].to_string()).unwrap();
+                println!("waiting on mutex");
                 *order.lock().unwrap() = Some(Order {
                     order_id,
                     positions,
                 });
+                println!("Order has been added");
             }
             if command_type_s.contains("sort_info") {
                 println!("{}", s);

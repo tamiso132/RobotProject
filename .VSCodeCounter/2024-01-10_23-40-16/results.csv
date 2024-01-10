@@ -1,0 +1,21 @@
+"filename", "language", "Rust", "Shell Script", "C", "C++", "comment", "blank", "total"
+"/home/tom/projects/RobotProject/bind.sh", "Shell Script", 0, 1, 0, 0, 0, 0, 1
+"/home/tom/projects/RobotProject/build.rs", "Rust", 29, 0, 0, 0, 0, 7, 36
+"/home/tom/projects/RobotProject/dobot/bluegen.h", "C++", 0, 0, 0, 3, 0, 0, 3
+"/home/tom/projects/RobotProject/dobot/camera/camera.c", "C", 0, 0, 25, 0, 0, 5, 30
+"/home/tom/projects/RobotProject/dobot/device/b_device.c", "C", 0, 0, 70, 0, 0, 19, 89
+"/home/tom/projects/RobotProject/dobot/device/device.c", "C", 0, 0, 46, 0, 0, 8, 54
+"/home/tom/projects/RobotProject/dobot/device/u_device.c", "C", 0, 0, 103, 0, 14, 20, 137
+"/home/tom/projects/RobotProject/dobot/device/u_s_device.c", "C", 0, 0, 91, 0, 13, 23, 127
+"/home/tom/projects/RobotProject/dobot/include/device.h", "C", 0, 0, 25, 0, 9, 17, 51
+"/home/tom/projects/RobotProject/dobot/include/utility.h", "C", 0, 0, 16, 0, 0, 4, 20
+"/home/tom/projects/RobotProject/dobot/utility/utility.c", "C", 0, 0, 43, 0, 0, 5, 48
+"/home/tom/projects/RobotProject/src/cbinding/bindings.rs", "Rust", 2501, 0, 0, 0, 1, 2, 2504
+"/home/tom/projects/RobotProject/src/cbinding/mod.rs", "Rust", 18, 0, 0, 0, 1, 5, 24
+"/home/tom/projects/RobotProject/src/image.rs", "Rust", 297, 0, 0, 0, 34, 55, 386
+"/home/tom/projects/RobotProject/src/lib.rs", "Rust", 2, 0, 0, 0, 0, 1, 3
+"/home/tom/projects/RobotProject/src/main.rs", "Rust", 152, 0, 0, 0, 15, 17, 184
+"/home/tom/projects/RobotProject/src/ordering.rs", "Rust", 85, 0, 0, 0, 2, 10, 97
+"/home/tom/projects/RobotProject/src/position.rs", "Rust", 151, 0, 0, 0, 12, 28, 191
+"/home/tom/projects/RobotProject/src/protocol/mod.rs", "Rust", 400, 0, 0, 0, 61, 102, 563
+"Total", "-", 3635, 1, 419, 3, 162, 328, 4548

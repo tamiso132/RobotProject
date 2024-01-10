@@ -177,8 +177,8 @@ fn check_color(rgb: [u8; 3], hue: (u16, u16), sat: (u16, u16), light: (u16, u16)
 pub enum Colory {
     Red,
     Yellow,
-    Blue,
     Green,
+    Blue,
 }
 
 fn get_object(pixels: &RgbImage, start_x: u32, start_y: u32, color: Colory) -> Option<Rectangle> {

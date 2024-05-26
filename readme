@@ -1,22 +1,19 @@
+# Inventory System using Dobot Magican Robot
 
-Material
-https://github.com/Dobot-Arm/TCP-IP-Protocol/blob/master
-https://github.com/robofit/dobot/tree/master/dobot/src C library
+## Bluetooth and UART
+Linux specific, using linux headers for uart and bluez library for bluetooth connection.
 
-Endast linux support
+## Protocol Development
+There is Rust macros for adding new protcol commands
 
-Nödvändiga packages för att de ska compila.
+## Implemented Features
+-Dobot Suction cup
+-Dobot Conveyor belt
+-Dobot Magican Movement
+-Rasperry pi camera
 
--bluez development packages
-sudo chmod 666 /dev/ttyUSB0, for permission on reboot
+## High Level Features
+- Grid system for cubes (Inventory, Order placements)
+- Ordersystem, (filling stock, do order, done with Order, sorting, order statistics)
 
 
-Kommande features som arbetas med nu, 
-*Fungerande bluetooth api som är easy och high level att använda
-*client kod 
-*server kod
-
-Features som kommer senare
-windows support
-protokoll för skickning mellan data
-robot kommunication
